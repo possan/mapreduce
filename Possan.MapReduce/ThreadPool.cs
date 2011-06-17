@@ -1,31 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace Possan.MapReduce
 {
-	public interface IPooledThread
-	{
-		Thread Thread { get; set; }
-		ManualResetEvent Signal { get; set; }
-		void Run();
-	}
-
-	public class PooledThread : IPooledThread
-	{
-		public Thread Thread { get; set; }
-		public ManualResetEvent Signal { get; set; }
-
-		public void Run()
-		{
-			InnerRun();
-			Signal.Set();
-		}
-
-		virtual public void InnerRun()
-		{
-		}
-	}
-
 	public class ThreadPool
 	{
 		private List<IPooledThread> m_running;
@@ -59,36 +37,34 @@ namespace Possan.MapReduce
 			bool any_not_started;
 			bool empty_space;
 			bool any_running;
+			DateTime nextdump = DateTime.Now.AddSeconds(2);
 			do
 			{
 				any_not_started = (m_notstarted.Count > 0);
 				empty_space = (m_running.Count < m_maxsimultaneous);
 				any_running = (m_running.Count > 0);
-
-				// check running if they've finished.
 				for (int i = m_running.Count - 1; i >= 0; i--)
 				{
 					var item = m_running[i];
-					if (WaitHandle.WaitAny(new[] { item.Signal }, 1) == 0)
+					if (WaitHandle.WaitAny(new[] { item.Signal }, 0) == 0)
 					{
-						// Console.WriteLine("Thread in running pool finished.");
-						item.Signal.Close(); 
+						item.Signal.Close();
 						m_running.RemoveAt(i);
-						m_done.Add(item);       										                                                 
+						m_done.Add(item);
 					}
 				}
-
-				if (any_not_started && empty_space)                                   
-				{                                                                                     
-					// Console.WriteLine("Starting thread in pool.");
+				if (any_not_started && empty_space)
+				{
 					var startme = m_notstarted.Dequeue();
 					startme.Signal = new ManualResetEvent(false);
-					// m_events.Add(startme.Signal);
 					m_running.Add(startme);
 					startme.Thread.Start();
 				}
-
-				Thread.Sleep(1);
+				if (DateTime.Now > nextdump)
+				{
+					Console.WriteLine("Threadpool waiting... [" + m_running.Count + " running, " + m_notstarted.Count + " in queue, "+m_done.Count+" done.]");
+					nextdump = DateTime.Now.AddSeconds(2);
+				}
 			}
 			while (any_running || any_not_started);
 		}

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Possan.MapReduce.Impl
+namespace Possan.MapReduce
 {
 	public class MemoryKeyValueStore : IKeyValueStore
 	{

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Possan.MapReduce.Impl;
 
 namespace Possan.MapReduce
 {
@@ -9,7 +8,7 @@ namespace Possan.MapReduce
 		class MapperCollector : IMapperCollector
 		{
 			private readonly IRecordWriter<string, string> _writer;
-
+			
 			public MapperCollector(IRecordWriter<string, string> writer)
 			{
 				_writer = writer;
@@ -23,62 +22,55 @@ namespace Possan.MapReduce
 
 		class MapperThread : PooledThread
 		{
-			public IStorage storage;
-			public string inputbatch;
+			public IRecordWriter<string, string> outputwriter;
 			public string inputkey;
-			public string outputbatch;
+			public string value;
 			public IMapper mapper;
 
 			override public void InnerRun()
 			{
-				Console.WriteLine("Entered mapper thread for batch " + inputbatch + ", key " + inputkey);
-
-				storage.DeleteBatch(outputbatch);
-
-				var value = storage.Get(inputbatch, inputkey);
-				var targetwriter = new RecordWriter(storage, outputbatch);
-				var collector = new MapperCollector(targetwriter);
+				var tempstorage = new NonLockingMemoryKeyValueReaderWriter();
 				try
 				{
-					mapper.Map(inputkey, value, collector);
+					mapper.Map(inputkey, value, new MapperCollector(tempstorage));
 				}
 				catch (Exception e)
 				{
 					Console.WriteLine("Mapper crashed: " + e);
 				}
-				// Console.WriteLine("Exiting mapper thread for key " + inputkey);
+				outputwriter.Write(tempstorage);
 			}
 		}
 
-		public static IList<string> Map(IStorage storage, string[] inputbatches, string outputbatch, IMapper mapper)
+		public static void Map(IRecordReader<string, string> inputreader, IRecordWriter<string, string> outputwriter, IMapper mapper)
 		{
-			var outputbatches = new List<string>();
-			var idx = 1;
-			var threadpool = new ThreadPool(40);
-			foreach (var inputbatch in inputbatches)
+			var threadpool = new ThreadPool(60);
+			int kidx = 0;
+			var keys = new List<string>(inputreader.GetKeys());
+			for (int i = 0; i < keys.Count; i++)
 			{
-				var files = storage.GetAllFilesInBatch(inputbatch);
-				foreach (var f in files)
+				var key = keys[i];
+				if (i % 100 == 0 && i > 0)
+					Console.WriteLine("Queueing mapper " + i + "/" + keys.Count + "...");
+
+				var values = inputreader.GetValues(key);
+				foreach (var value in values)
 				{
-					// TODO: run in parallel
-					var targetfolder = outputbatch + "-" + idx; // storage.CreateBatch();// outputfolder + "\\mapper-" + idx;
 					var mt = new MapperThread();
 					mt.mapper = mapper;
-					mt.storage = storage;
-					mt.inputbatch = inputbatch;
-					mt.outputbatch = targetfolder;
-					mt.inputkey = f;
+					mt.outputwriter = outputwriter;
+					mt.inputkey = key;
+					mt.value = value;
 					threadpool.Queue(mt);
-					outputbatches.Add(targetfolder);
-					idx++;
 				}
+				kidx++;
 			}
-
 			Console.WriteLine("Waiting for threads to finish.");
-			threadpool.WaitAll();
+			using (new Timing("Inner mapper"))
+			{
+				threadpool.WaitAll();
+			}
 			Console.WriteLine("Threads finished.");
-
-			return outputbatches;
 		}
 	}
 }

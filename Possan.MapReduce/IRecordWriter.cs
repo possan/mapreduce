@@ -2,6 +2,7 @@
 {
 	public interface IRecordWriter<K, V>
 	{
-		bool Write(K key, V value);
+		void Write(K key, V value);
+		void Write(IRecordReader<K, V> reader);
 	}
 }

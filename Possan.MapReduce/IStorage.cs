@@ -14,9 +14,7 @@ namespace Possan.MapReduce
 		
 		string Get(string batch, string filename);
 		void Put(string batch, string filename, string content);
-
-		//void Append(string batch, string filename, string content);
-
+		 
 		void Copy(string inputbatch, string inputfilename, string outputbatch, string outputfilename);
 	}
 }

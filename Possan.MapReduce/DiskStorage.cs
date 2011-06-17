@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace Possan.MapReduce.Impl
+namespace Possan.MapReduce
 {
 	public class DiskStorage : IStorage
 	{
@@ -85,8 +85,15 @@ namespace Possan.MapReduce.Impl
 		public void DeleteBatch(string batch)
 		{
 			string path = BuildPath(batch, null);
-			Console.WriteLine("Deleting path: "+path);
-			Directory.Delete(path, true);
+			// Console.WriteLine("Deleting path: "+path);
+			try
+			{
+				Directory.Delete(path, true);
+			}
+			catch(Exception)
+			{
+				
+			}
 		}
 	}
 }

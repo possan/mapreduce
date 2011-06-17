@@ -17,7 +17,7 @@ namespace mrtest
 			var words = filecontent.Split(new[] { ' ', ',', ';', '.', '\n', '\r', '\t', '\"', '(', ')', '/', '\\', '{', '}', '[', ']', ':', '-', '+', '!', '#', '$', '!', '?' });
 			for (int i = 0; i < words.Length; i++)
 			{
-				if (i % 500 == 0)
+				if (i % 10000 == 0)
 					Console.WriteLine("mapper for " + key + ": " + i + " of " + words.Length + " done.");
 				var tag = words[i];
 				var tag2 = NormalizeString(tag).ToLower().Trim();
@@ -31,16 +31,15 @@ namespace mrtest
 		{
 			if (input == null)
 				return "";
-			var ret = "";
+			var sb = new StringBuilder();
 			var normalizedString = input.Normalize(NormalizationForm.FormD);
-			for (int i = 0; i < normalizedString.Length; i++)
+			foreach(char c in normalizedString)
 			{
-				var c = normalizedString[i];
 				var uc = CharUnicodeInfo.GetUnicodeCategory(c);
 				if (uc == UnicodeCategory.UppercaseLetter || uc == UnicodeCategory.LowercaseLetter || uc == UnicodeCategory.DecimalDigitNumber)
-					ret += c;
+					sb.Append(c);
 			}
-			return ret;
+			return sb.ToString();
 		}
 	}
 }

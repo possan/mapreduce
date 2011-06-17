@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Possan.MapReduce.Impl
+namespace Possan.MapReduce
 {
 	public class RecordWriter : IRecordWriter<string, string>
 	{
@@ -13,12 +13,23 @@ namespace Possan.MapReduce.Impl
 			_batch = batch;
 		}
 
-		public bool Write(string key, string value)
+		public void Write(string key, string value)
 		{
-			// Console.WriteLine("key: " + key + " value: " + value);
+			if (key == null)
+				return;
+
+			if (value == null)
+				return;
+
 			string dir = _batch + "/" + key;
 			_storage.Put(dir, Guid.NewGuid().ToString().Replace("-", "") + ".txt", value);
-			return true;
+		}
+
+		public void Write(IRecordReader<string, string> reader)
+		{
+			foreach (var k in reader.GetKeys())
+				foreach (var v in reader.GetValues(k))
+					Write(k, v);
 		}
 	}
 }

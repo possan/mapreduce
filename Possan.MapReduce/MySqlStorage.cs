@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using MySql.Data.MySqlClient;
 
-namespace Possan.MapReduce.Impl
+namespace Possan.MapReduce
 {
 	public class MySqlStorage : IStorage, IDisposable
 	{

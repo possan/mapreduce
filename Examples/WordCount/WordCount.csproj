@@ -33,9 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="JsonFx.Json">
-      <HintPath>..\..\..\repos\zitiz\trunk\External\JsonFx.Json.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework, Version=2.5.3.9345, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\repos\zitiz\trunk\External\nunit.framework.dll</HintPath>

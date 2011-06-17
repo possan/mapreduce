@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Possan.MapReduce.Impl
+namespace Possan.MapReduce
 {
 	public class GenericKeyValueStorage : IStorage
 	{

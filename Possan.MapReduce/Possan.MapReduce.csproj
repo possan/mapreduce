@@ -42,15 +42,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseRecordDumper.cs" />
+    <Compile Include="ConsoleRecordDumper.cs" />
     <Compile Include="IKeyValueStore.cs" />
     <Compile Include="IMapperCollector.cs" />
-    <Compile Include="Impl\DiskStorage.cs" />
+    <Compile Include="DiskStorage.cs" />
     <Compile Include="IMapper.cs" />
-    <Compile Include="Impl\GenericKeyValueStorage.cs" />
-    <Compile Include="Impl\MemoryKeyValueStore.cs" />
-    <Compile Include="Impl\MySqlStorage.cs" />
-    <Compile Include="Impl\RecordReader.cs" />
-    <Compile Include="Impl\RecordWriter.cs" />
+    <Compile Include="FirstValueReducer.cs" />
+    <Compile Include="GenericKeyValueStorage.cs" />
+    <Compile Include="GroupValuesByKeyReducer.cs" />
+    <Compile Include="IdentityReducer.cs" />
+    <Compile Include="IPooledThread.cs" />
+    <Compile Include="IRecordDumper.cs" />
+    <Compile Include="MemoryKeyValueStore.cs" />
+    <Compile Include="MySqlStorage.cs" />
+    <Compile Include="NonLockingMemoryKeyValueReaderWriter.cs" />
+    <Compile Include="PooledThread.cs" />
+    <Compile Include="RecordReader.cs" />
+    <Compile Include="RecordWriter.cs" />
+    <Compile Include="StorageBatchKeyValueReaderWriter.cs" />
+    <Compile Include="SwapKeyValueMapper.cs" />
+    <Compile Include="MemoryKeyValueReaderWriter.cs" />
+    <Compile Include="TextFileRecordDumper.cs" />
+    <Compile Include="UniqueValuesReducer.cs" />
     <Compile Include="IRecordReader.cs" />
     <Compile Include="IRecordWriter.cs" />
     <Compile Include="IReducer.cs" />
@@ -60,8 +74,8 @@
     <Compile Include="MapperAndReducer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Reducer.cs" />
-    <Compile Include="Shuffler.cs" />
     <Compile Include="ThreadPool.cs" />
+    <Compile Include="Timing.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

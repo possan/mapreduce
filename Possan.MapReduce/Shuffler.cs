@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
-using Possan.MapReduce.Impl;
 
 namespace Possan.MapReduce
 {
@@ -9,7 +7,8 @@ namespace Possan.MapReduce
 	{
 		class KeyShufflerThread : PooledThread
 		{
-			public IStorage storage;
+			public IStorage sourcestorage;
+			public IStorage targetstorage;
 			public string targetbatch;
 			public string sourcebatch;
 			public string key;
@@ -17,8 +16,8 @@ namespace Possan.MapReduce
 			override public void InnerRun()
 			{
 				// Console.WriteLine("Starting key shufflethread; key=" + key + ", source=" + sourcebatch + ", target=" + targetbatch);
-				var reader = new RecordReader(storage, sourcebatch);
-				var writer = new RecordWriter(storage, targetbatch);
+				var reader = new RecordReader(sourcestorage, sourcebatch);
+				var writer = new RecordWriter(targetstorage, targetbatch);
 				var values = new List<string>(reader.GetValues(key));
 				for (var j = 0; j < values.Count; j++)
 				{
@@ -32,17 +31,18 @@ namespace Possan.MapReduce
 
 		class ShufflerThread : PooledThread
 		{
-			public IStorage storage;
+			public IStorage sourcestorage;
+			public IStorage targetstorage;
 			public string targetbatch;
 			public string sourcebatch;
 
 			override public void InnerRun()
 			{
 				Console.WriteLine("Starting shufflethread; source=" + sourcebatch + ", target=" + targetbatch);
-				var reader = new RecordReader(storage, sourcebatch);
+				var reader = new RecordReader(sourcestorage, sourcebatch);
 				var keys = new List<string>(reader.GetKeys());
-				Console.WriteLine("Got " + keys.Count + " keys");
-				var localthreadpool = new ThreadPool(5);
+				//	Console.WriteLine("Got " + keys.Count + " keys");
+				var localthreadpool = new ThreadPool(10);
 				for (int k = 0; k < keys.Count; k++)
 				{
 					var key = keys[k];
@@ -50,37 +50,36 @@ namespace Possan.MapReduce
 						Console.WriteLine("Queueing shuffle for key " + key + " (" + k + " of " + keys.Count + ")");
 					var kt = new KeyShufflerThread();
 					kt.key = key;
-					kt.storage = storage;
+					kt.sourcestorage = sourcestorage;
+					kt.targetstorage = targetstorage;
 					kt.sourcebatch = sourcebatch;
 					kt.targetbatch = targetbatch;
 					localthreadpool.Queue(kt);
 				}
 				localthreadpool.WaitAll();
 			}
-		}
+		} 
 
-		public static IList<string> Shuffle(IStorage storage, string[] sourcebatches, string targetbatch)
+		public static void Shuffle(IEnumerable<IRecordReader<string, string>> inputs, IRecordWriter<string, string> output)
 		{
+			/*
 			var threadpool = new ThreadPool(5);
 
 			Console.WriteLine("Shuffling..");
-			foreach (var sourcebatch in sourcebatches)
+			foreach (var input in inputs)
 			{
 				Console.WriteLine("Shuffling from " + sourcebatch + " to " + targetbatch);
 				var st = new ShufflerThread();
-				st.storage = storage;
+				st.sourcestorage = sourcestorage;
+				st.targetstorage = outputstorage;
 				st.sourcebatch = sourcebatch;
 				st.targetbatch = targetbatch;
 				threadpool.Queue(st);
 			}
-
+			
 			Console.WriteLine("Waiting for threads to finish.");
 			threadpool.WaitAll();
-			Console.WriteLine("Threads finished.");
-
-			var ret = new List<string>();
-			ret.Add(targetbatch);
-			return ret;
+			Console.WriteLine("Threads finished.");*/
 		}
 	}
 }
