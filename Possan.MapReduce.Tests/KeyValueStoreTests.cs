@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
+using Possan.MapReduce.IO;
 
 namespace Possan.MapReduce.Tests
 {
