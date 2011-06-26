@@ -1,4 +1,5 @@
-﻿using System.Threading;
+using System.Threading;
+using System;
 
 namespace Possan.MapReduce.Util
 {
@@ -9,7 +10,13 @@ namespace Possan.MapReduce.Util
 
 		public void Run()
 		{
-			InnerRun();
+			try{
+				InnerRun();
+				// Console.WriteLine( "Thread done, delay then signal." );
+			}catch(Exception e){	
+				Console.WriteLine( "Thread failed: "+e );
+			}
+			Thread.Sleep(10);
 			Signal.Set();
 		}
 

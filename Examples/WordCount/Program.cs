@@ -14,6 +14,12 @@ namespace mrtest
 	{
 		static void Main(string[] args)
 		{
+			if( args.Length != 1 )
+			{
+				Console.WriteLine( "WordCount [folder]" );
+				return;
+			}
+
 			using (new Timing("Entire program"))
 			{
 				// ThreadPool.MaximumTotalConcurrentThreads = 60;
@@ -23,9 +29,10 @@ namespace mrtest
 				Console.WriteLine();
 
 				string prefix = "wordcount-" + Guid.NewGuid().ToString().Replace("-", "").Substring(0, 5) + "-";
-				var tempoutput = "c:\\temp\\" + prefix + "-result.txt";// Path.GetTempPath() + "\\temp2";
-
-				Fluently.Map.Input(new TextFilesFolderSource("c:\\temp\\textfiles"))
+				var tempoutput = Path.GetTempPath() + prefix + "-result.txt";				
+				var tempinput = args[0];//Path.GetTempPath() + "textfiles";
+	
+				Fluently.Map.Input(new TextFilesFolderSource(tempinput))
 				//	.PartitionInputInMemoryUsing(new StandardPartitioner(9))
 					.WithInMemoryMapper(new TestMapper())
 					.ShuffleInMemoryUsing(new MD5Partitioner())
@@ -73,7 +80,7 @@ namespace mrtest
 			foreach (var k in toplist)
 				sb.Append(string.Format("{0} {1}\n", k.Hits, k.Word));
 			string report = sb.ToString();
-			File.WriteAllText("c:\\temp\\reducer-output.txt", report);
+			// File.WriteAllText("c:\\temp\\reducer-output.txt", report);
 			Console.WriteLine(report);
 		}
 

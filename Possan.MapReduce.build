@@ -1,0 +1,57 @@
+<project default="wordcount">
+
+	<target name="make-builddir">
+		<mkdir dir="build" />
+	</target>
+
+	<target name="run-wordcount" depends="wordcount">
+		<exec program="mono" workingdir="build/">
+			<arg value="WordCount.exe" />
+			<arg value="testdocs/" />
+		</exec>
+	</target>
+
+	<target name="possan.mapreduce" depends="make-builddir">
+		<csc target="library" output="build/Possan.MapReduce.dll" debug="true">
+			<nowarn>
+			<!-- do not report warnings for missing XML comments -->
+			<warning number="0519" />
+			</nowarn>
+		    <sources>
+		        <include name="Possan.MapReduce/**/*.cs" />
+		    </sources>
+		    <resources dynamicprefix="true" prefix="HelloWorld">
+		        <include name="Possan.MapReduce/**/*.resx" />
+		    </resources>
+		    <references>
+		        <include name="System.dll" />
+		        <include name="System.Data.dll" />
+		    </references>
+		</csc>
+	</target>
+
+	<target name="wordcount" depends="possan.mapreduce">
+		<copy todir="build/testdocs">
+			<fileset basedir="Examples/WordCount/Docs">
+				<include name="*" />
+			</fileset>
+		</copy>
+		<csc target="exe" output="build/WordCount.exe" debug="true">
+    		<nowarn>
+      			<warning number="0519" />
+		    </nowarn>
+		    <sources>
+		        <include name="Examples/WordCount/**/*.cs" />
+		    </sources>
+    		<resources dynamicprefix="true" prefix="WordCount">
+    		    <include name="Examples/WordCount/**/*.resx" />
+   		 	</resources>
+   			<references>
+        		<include name="System.dll" />
+       			<include name="System.Data.dll" />
+   			    <include name="build/Possan.MapReduce.dll" />
+    		</references>
+		</csc>
+	</target>
+
+</project>
