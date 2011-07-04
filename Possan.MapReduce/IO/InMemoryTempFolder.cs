@@ -5,14 +5,20 @@ namespace Possan.MapReduce.IO
 {
 	public class InMemoryTempFolder : IFileSourceAndDestination<string, string>
 	{
-	//	private Dictionary<string, IRecordStreamReaderAndWriter<string, string>> tempfiles;
 		private MemoryKeyValueStreamReaderWriter buffer;
 		private Queue<string> readqueue;
+
+		public IRecordStreamReaderAndWriter<string, string> Buffer
+		{
+			get
+			{
+				return buffer;
+			}
+		}
 
 		public InMemoryTempFolder()
 		{
 			buffer = new MemoryKeyValueStreamReaderWriter();
-			// tempfiles = new Dictionary<string, IRecordStreamReaderAndWriter<string,string>>();
 			readqueue = null;
 		}
 
@@ -20,18 +26,12 @@ namespace Possan.MapReduce.IO
 		{
 			if (readqueue != null)
 				return;
-
 			readqueue = new Queue<string>();
 			readqueue.Enqueue("all");
-			//	foreach(var f in tempfiles.Keys)
-			//		readqueue.Enqueue(f);
 		}
 
 		public IRecordWriter<string, string> CreateWriter()
 		{
-			//	var fn = Guid.NewGuid().ToString();
-			//	var buf = new MemoryKeyValueStreamReaderWriter();
-			//	tempfiles.Add(fn, buf );
 			readqueue = null;
 			return buffer;
 		}
@@ -52,10 +52,8 @@ namespace Possan.MapReduce.IO
 		{
 			if (id != "all")
 				return null;
-			
+
 			return buffer;
-			// return tempfiles[id];
-			// throw new NotImplementedException();
 		}
 	}
 

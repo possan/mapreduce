@@ -5,13 +5,15 @@ namespace Possan.MapReduce.IO
 {
 	public class MemoryKeyValueStreamReaderWriter : IRecordStreamReaderAndWriter<string, string>
 	{
-		private Dictionary<string, List<string>> _data;
+		// private Dictionary<string, List<string>> _data;
+		private List<KVP> _data;
 		private int _counter;
-		private Queue<KeyValuePair<string, string>> _readqueue;
+		private Queue<KVP> _readqueue;
 
 		public MemoryKeyValueStreamReaderWriter()
 		{
-			_data = new Dictionary<string, List<string>>();
+			// _data = new Dictionary<string, List<string>>();
+			_data = new List<KVP>();
 			_readqueue = null;
 			_counter = 0;
 		}
@@ -25,14 +27,18 @@ namespace Possan.MapReduce.IO
 		{
 			if (string.IsNullOrEmpty(key))
 				return;
+
 			if (string.IsNullOrEmpty(value))
 				return;
-			if (checkkey && !_data.ContainsKey(key))
-				_data.Add(key, new List<string>());
-			_data[key].Add(value);
+
+			//	if (checkkey) 
+			//		if( !_data.ContainsKey(key))
+			//			_data.Add(key, new List<string>());
+			//	_data[key].Add(value);
+			_data.Add(new KVP { Key = key, Value = value });
 			_readqueue = null;
 			_counter++;
-			if (_counter % 20000 == 0 && _counter > 0)
+			if (_counter % 10000 == 0 && _counter > 0)
 			{
 				Console.WriteLine("Memory key/value store; added key #" + _counter);
 			}
@@ -67,8 +73,8 @@ namespace Possan.MapReduce.IO
 				{
 					if (k == null)
 						continue;
-					if (!_data.ContainsKey(k))
-						_data.Add(k, new List<string>());
+					//	if (!_data.ContainsKey(k))
+					//		_data.Add(k, new List<string>());
 					foreach (var v in reader.GetValues(k))
 					{
 						InLockAdd(k, v, false);
@@ -97,15 +103,24 @@ namespace Possan.MapReduce.IO
 			if (_readqueue != null)
 				return;
 
-			_readqueue = new Queue<KeyValuePair<string, string>>();
-			foreach (var key in _data.Keys)
-				foreach (var value in _data[key])
-					_readqueue.Enqueue(new KeyValuePair<string, string>(key, value));
+			_readqueue = new Queue<KVP>();
+			// foreach (var key in _data.Keys)
+			//	foreach (var value in _data[key])
+			// 	_readqueue.Enqueue(new KVP { Key = key, Value = value });
+
+			foreach (var item in _data)
+				_readqueue.Enqueue(item);
 		}
 
 		public void Dispose()
 		{
 			// throw new NotImplementedException();
+		}
+
+		struct KVP
+		{
+			public string Key;
+			public string Value;
 		}
 	}
 }

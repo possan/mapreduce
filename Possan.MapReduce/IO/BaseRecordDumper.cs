@@ -30,6 +30,28 @@ namespace Possan.MapReduce.IO
 			Dump(rr, title);
 		}
 
+		public void Dump(IRecordStreamReader<string, string> reader, string title)
+		{
+			DumpHeader(title);
+			string k, v;
+			while(reader.Read(out k,out v))
+				WriteLine(k + " => " + v);
+			DumpFooter(title);
+		}
+
+		public void Dump(IFileSource<string, string> filesource, string title)
+		{
+			DumpHeader(title);
+			var fn = "";
+			while (filesource.ReadNext(out fn))
+			{
+				var reader = filesource.CreateStreamReader(fn);
+				string k, v;
+				while (reader.Read(out k, out v))
+					WriteLine(k + " => " + v);
+			}
+			DumpFooter(title);
+		}
 		public void Dump(IRecordReader<string, string> reader, string title)
 		{
 			DumpHeader(title);

@@ -15,6 +15,7 @@ namespace Possan.MapReduce
 		public bool MapperFitsInMemory { get; set; }
 		public bool ShufflerFitsInMemory { get; set; }
 		public bool ReducerFitsInMemory { get; set; }
+		public bool RunReducerAfterEveryMapper { get; set; }
 
 		internal MapAndReduceJob()
 		{
@@ -29,6 +30,7 @@ namespace Possan.MapReduce
 			MapperFitsInMemory = false;
 			ShufflerFitsInMemory = false;
 			ReducerFitsInMemory = false;
+			RunReducerAfterEveryMapper = false;
 		}
 
 		IFileSourceAndDestination<string, string> CreateTemporaryStorage(bool inmemory)
@@ -42,15 +44,17 @@ namespace Possan.MapReduce
 		{
 			var mapperoutput = CreateTemporaryStorage(MapperFitsInMemory);
 
+			IReducer prereducer = RunReducerAfterEveryMapper ? Reducer : null;
+
 			if (InputPartitioner != null)
 			{
 				var temp1 = CreateTemporaryStorage(InputFitsInMemory);
 				Util.Splitter.Split(Input, temp1, InputPartitioner);
-				Util.Mapper.Map(temp1, mapperoutput, Mapper, Reducer);
+				Util.Mapper.Map(temp1, mapperoutput, Mapper, prereducer);
 			}
 			else
 			{
-				Util.Mapper.Map(Input, mapperoutput, Mapper, Reducer);
+				Util.Mapper.Map(Input, mapperoutput, Mapper, prereducer);
 			}
 
 			// samma

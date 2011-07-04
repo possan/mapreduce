@@ -8,33 +8,13 @@ namespace Possan.MapReduce.Util
 	{
 		class MapFilesThread : PooledThread
 		{
-			class MapThread : PooledThread
-			{
-				public IMapperCollector collector;
-				public string inputkey;
-				public string value;
-				public IMapper mapper;
-
-				override public void InnerRun()
-				{
-					try
-					{
-						mapper.Map(inputkey, value, collector);
-					}
-					catch (Exception e)
-					{
-						Console.WriteLine("Mapper crashed: " + e);
-					}
-				}
-			}
-
 			class MapAndReduceThread : PooledThread
 			{
-				public IFileDestination<string, string> OutputFolder;
-				public string inputkey;
-				public string value;
-				public IMapper mapper;
-				public IReducer reducer;
+				public IFileDestination<string, string> OutputFolder = null;
+				public string inputkey = "";
+				public string value = "";
+				public IMapper mapper = null;
+				public IReducer reducer = null;
 
 				override public void InnerRun()
 				{
@@ -48,23 +28,38 @@ namespace Possan.MapReduce.Util
 						Console.WriteLine("Mapper crashed: " + e);
 					}
 
-					if( tmp.Count == 0 )
+					if (tmp.Count == 0)
 						return;
 
-					var w = OutputFolder.CreateWriter();
-					var rw = new RecordWriterReducerCollector(w);
-					foreach (var k in tmp.GetKeys())
+					if (reducer != null)
 					{
-						try
+						var tmp2 = new NonLockingMemoryKeyValueReaderWriter();
+					
+						var rw = new RecordWriterReducerCollector(tmp2);
+						foreach (var k in tmp.GetKeys())
 						{
-							reducer.Reduce(k, tmp.GetValues(k), rw, false);
+							try
+							{
+								reducer.Reduce(k, tmp.GetValues(k), rw, false);
+							}
+							catch (Exception e)
+							{
+								Console.WriteLine("Reducer crashed: " + e);
+							}
 						}
-						catch (Exception e)
+
+						using (var w = OutputFolder.CreateWriter())
 						{
-							Console.WriteLine("Reducer crashed: " + e);
+							w.Write(tmp2);
 						}
 					}
-					w.Dispose();
+					else
+					{
+						using (var w = OutputFolder.CreateWriter())
+						{
+							w.Write(tmp);
+						}
+					}
 				}
 			}
 
@@ -73,6 +68,7 @@ namespace Possan.MapReduce.Util
 			public IFileSource<string, string> InputFolders;
 			public IFileDestination<string, string> OutputFolder;
 			public List<string> FileIDs;
+			public ThreadPool threadpool;
 
 			public MapFilesThread()
 			{
@@ -81,72 +77,26 @@ namespace Possan.MapReduce.Util
 
 			public override void InnerRun()
 			{
-				if( reducer != null )
+				int kidx = 0;
+				foreach (var fileid in FileIDs)
 				{
-					var threadpool = new ThreadPool(50, "Single file mapper and reducer");
-					int kidx = 0; 
-						
-					foreach (var fileid in FileIDs)
+					using (var rdr = InputFolders.CreateStreamReader(fileid))
 					{
-						using (var rdr = InputFolders.CreateStreamReader(fileid))
+						string k, v;
+						while (rdr.Read(out k, out v))
 						{
-							string k, v;
-							while (rdr.Read(out k, out v))
+							if (kidx % 1000 == 0 && kidx > 0)
+								Console.WriteLine("Queueing mapper " + kidx + " (" + fileid + ") ...");
+							threadpool.Queue(new MapAndReduceThread
 							{
-								if (kidx % 1000 == 0 && kidx > 0)
-									Console.WriteLine("Queueing mapper " + kidx + " (" + fileid + ") ...");
-
-								var mt = new MapAndReduceThread();
-								mt.mapper = mapper;
-								mt.reducer = reducer;
-								mt.OutputFolder = OutputFolder;
-								mt.inputkey = k;
-								mt.value = v;
-								threadpool.Queue(mt);
-								threadpool.Step();
-								kidx++;
-							}
+								mapper = mapper,
+								reducer = reducer,
+								OutputFolder = OutputFolder,
+								inputkey = k,
+								value = v
+							});
+							kidx++;
 						}
-					}
-
-					// Console.WriteLine("Waiting for mappers to finish.");
-					var t1 = new Timing("Inner mapper for " + FileIDs.Count + " files.");
-					threadpool.WaitAll();
-					t1.End();
-				}
-				else
-				{
-
-					var threadpool = new ThreadPool(50, "Single file mapper");
-					int kidx = 0;
-					using (var coll = new FileDestinationMapperCollector { Output = OutputFolder })
-					{
-						foreach (var fileid in FileIDs)
-						{
-							using (var rdr = InputFolders.CreateStreamReader(fileid))
-							{
-								string k, v;
-								while (rdr.Read(out k, out v))
-								{
-									if (kidx % 1000 == 0 && kidx > 0)
-										Console.WriteLine("Queueing mapper " + kidx + " (" + fileid + ") ...");
-
-									var mt = new MapThread();
-									mt.mapper = mapper;
-									mt.collector = coll;
-									mt.inputkey = k;
-									mt.value = v;
-									threadpool.Queue(mt);
-									threadpool.Step();
-									kidx++;
-								}
-							}
-						}
-
-						// Console.WriteLine("Waiting for mappers to finish.");
-						var t1 = new Timing("Inner mapper for " + FileIDs.Count + " files.");
-						threadpool.WaitAll();
-						t1.End();
 					}
 				}
 			}
@@ -156,7 +106,6 @@ namespace Possan.MapReduce.Util
 		{
 			Map(inputfolders, shuffleroutput, mapper, null, 50);
 		}
-
 
 		public static void Map(IFileSource<string, string> inputfolders, IFileDestination<string, string> shuffleroutput, IMapper mapper, IReducer prereducer)
 		{
@@ -173,44 +122,34 @@ namespace Possan.MapReduce.Util
 			// var partitioner = new StandardKeyPartitioner(Count);
 
 			var threadpool = new ThreadPool(threads, "Mapper file threads");
+			var threadpool2 = new ThreadPool(threads, "Mapper threads");
 
 			Console.WriteLine("Preparing mappers...");
 
-			string inputfileid = "";
-			int counter = 0;
-			MapFilesThread ft = null;
+			string inputfileid;
 			while (inputfolders.ReadNext(out inputfileid))
 			{
-				if (ft == null)
-				{
-					ft = new MapFilesThread();
-					ft.InputFolders = inputfolders;
-					ft.OutputFolder = shuffleroutput;
-					ft.mapper = mapper;
-					ft.reducer = prereducer;
-				}
-
+				var ft = new MapFilesThread();
+				ft.InputFolders = inputfolders;
+				ft.OutputFolder = shuffleroutput;
+				ft.mapper = mapper;
+				ft.reducer = prereducer;
 				ft.FileIDs.Add(inputfileid);
-
-				counter++;
-				if (counter > 2)
-				{
-					counter = 0;
-					threadpool.Queue(ft);
-					ft = null;
-				}
-			}
-
-			if (ft != null)
-			{
+				ft.threadpool = threadpool2;
 				threadpool.Queue(ft);
-				ft = null;
+				threadpool.Step();
 			}
 
-			Console.WriteLine("Waiting for mapper threads to finish...");
+			Console.WriteLine("Waiting for mapper file threads to finish...");
 			var t1 = new Timing("Inner mapper");
 			threadpool.WaitAll();
 			t1.End();
+			Console.WriteLine("Mapper file threads finished.");
+
+			Console.WriteLine("Waiting for mapper threads to finish...");
+			var t2 = new Timing("Inner mapper");
+			threadpool2.WaitAll();
+			t2.End();
 			Console.WriteLine("Mapper threads finished.");
 
 			GC.Collect();

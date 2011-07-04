@@ -5,7 +5,7 @@ namespace Possan.MapReduce.Util
 	public class Timing : IDisposable
 	{
 		private readonly string _label;
-		private static DateTime _start;
+		private DateTime _start;
 		 
 		public Timing(string label)
 		{
@@ -16,14 +16,14 @@ namespace Possan.MapReduce.Util
 		void Begin()
 		{
 			_start = DateTime.Now;
-			Console.WriteLine(_label + " started at: " + _start + "." + _start.Millisecond);
+			// Console.WriteLine(_label + " started at: " + _start + "." + _start.Millisecond);
 		}
 
 		public void End()
 		{
 			var end = DateTime.Now;
-		//	Console.WriteLine(_label + " started at: " + _start + "." + _start.Millisecond);
-			Console.WriteLine(_label + " ended at: " + end + "." + end.Millisecond);
+		//	Console.WriteLine(_label + );
+		//	Console.WriteLine(_label + " ended at: " + end + "." + end.Millisecond + " (started at: " + _start + "." + _start.Millisecond+")");
 			var dur = end.Subtract(_start).TotalSeconds;
 		//	if( dur < 1.0 )
 		//		return;

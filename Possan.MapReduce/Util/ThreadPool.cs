@@ -10,10 +10,11 @@ namespace Possan.MapReduce.Util
 		private Queue<IPooledThread> m_notstarted;
 		private List<IPooledThread> m_done;
 
-		public static int MaximumTotalConcurrentThreads = 10;
+		public static int MaximumTotalConcurrentThreads = 2 * Environment.ProcessorCount;
 
 		private int m_maxsimultaneous;
 		private string m_name;
+		private int _queuecount;
 
 		public ThreadPool(int simultaneous, string name)
 			: this(simultaneous)
@@ -24,6 +25,7 @@ namespace Possan.MapReduce.Util
 		public ThreadPool(int simultaneous)
 		{
 			m_name = "";
+			_queuecount = 0;
 			m_running = new List<IPooledThread>();
 			m_notstarted = new Queue<IPooledThread>();
 			m_done = new List<IPooledThread>();
@@ -35,68 +37,82 @@ namespace Possan.MapReduce.Util
 
 		public void Queue(IPooledThread thread)
 		{
-			thread.Thread = new Thread(thread.Run);
-			m_notstarted.Enqueue(thread);
+			lock (m_running)
+			{
+				thread.Thread = new Thread(thread.Run);
+				m_notstarted.Enqueue(thread);
+				_queuecount++;
+				if (_queuecount % 1000 == 0 && _queuecount > 0)
+					Console.WriteLine("Threadpool queued " + _queuecount + " jobs...");
+			}
 		}
 
 		public void Step()
 		{
-			if( m_running.Count > 0 )
+			if (AnyRunning)
+			{
+				Monitor.Enter(m_running);
 				for (int i = m_running.Count - 1; i >= 0; i--)
 				{
 					var item = m_running[i];
-					// Console.WriteLine("Checking for signal: "+item.Signal+" (#"+i+")");
 					var test = false;
-					try{
-						test = item.Signal.WaitOne(0,true);
-					} catch( Exception z ){
+					try
+					{
+						test = item.Signal.WaitOne(1, true);
 					}
-					if( test )
+					catch (Exception z)
+					{
+					}
+					if (test)
 					{
 						item.Signal.Close();
 						m_running.RemoveAt(i);
 						m_done.Add(item);
-					//	Console.WriteLine("Got signal for #"
-					//		+ i + ", "
-					//		+ m_done.Count + " items done, "
-					//		+ m_running.Count + " running.");
 					}
 				}
-			bool any_not_started = (m_notstarted.Count > 0);
-			bool empty_space = (m_running.Count < m_maxsimultaneous);
-			if (any_not_started && empty_space)
+				Monitor.Exit(m_running);
+			}
+
+			while (AnyNotStarted && EmptySpace)
 			{
+				Monitor.Enter(m_running);
 				var startme = m_notstarted.Dequeue();
 				startme.Signal = new ManualResetEvent(false);
 				m_running.Add(startme);
 				startme.Thread.Start();
-				// Console.WriteLine("Started another one. "+m_running.Count+" running, "+m_notstarted.Count+" queued.");
+				Monitor.Exit(m_running);
 			}
 		}
 
+		bool AnyRunning { get { return m_running.Count > 0; } }
+		bool EmptySpace { get { return m_running.Count < m_maxsimultaneous; } }
+		bool AnyNotStarted { get { return m_notstarted.Count > 0; } }
+
 		public void WaitAll()
 		{
-			bool any_not_started;
-			bool any_running;
+			var lastnotst = m_notstarted.Count;
 			var nextdump = DateTime.Now.AddSeconds(1);
 			do
 			{
 				Step();
 				if (DateTime.Now > nextdump)
 				{
-					Console.WriteLine("Threadpool \"" 
-						+ m_name + "\" waiting... [" 
-						+ m_running.Count + " running, " 
-						+ m_notstarted.Count + " in queue, " 
-						+ m_done.Count + " done.]");					
-					nextdump = DateTime.Now.AddSeconds(2);
+					float eta = 0;
+					var diff = lastnotst - m_notstarted.Count;
+					if (diff > 0)
+						eta = (float)m_notstarted.Count / (float)diff;
+					Console.WriteLine("Threadpool \""
+						+ m_name + "\" waiting... ["
+						+ m_running.Count + " running (of " + m_maxsimultaneous + "), "
+						+ m_notstarted.Count + " in queue, "
+						+ m_done.Count + " done, eta: " + eta + "]");
+					nextdump = DateTime.Now.AddSeconds(1);
+					lastnotst = m_notstarted.Count;
 				}
-				Thread.Sleep(1);
-				any_running = (m_running.Count > 0);
-				any_not_started = (m_notstarted.Count > 0);
+				Thread.Sleep(10);
 			}
-			while (any_running || any_not_started);
-			Console.WriteLine( "Threadpool WaitAll Done.");
+			while (AnyRunning || AnyNotStarted);
+			Console.WriteLine("Threadpool WaitAll Done.");
 		}
 	}
 }

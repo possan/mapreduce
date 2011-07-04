@@ -54,7 +54,7 @@ namespace Possan.MapReduce.IO
 		{
 			string key = Path.GetFileName( Path.GetDirectoryName(id));
 			string value = File.ReadAllText(id);
-			return new OneRecordStreamReader(key, value);
+			return new DummyRecordStreamReader(key, value,1);
 		} 
 	}
 }

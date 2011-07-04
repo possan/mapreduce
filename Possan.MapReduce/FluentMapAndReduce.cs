@@ -43,6 +43,12 @@ namespace Possan.MapReduce
 			return this;
 		}
 
+		public FluentMapAndReduce ReduceAfterEveryMapper()
+		{
+			job.RunReducerAfterEveryMapper = true;
+			return this;
+		}
+
 		public FluentMapAndReduce ReduceUsing(IReducer reducer)
 		{
 			job.Reducer = reducer;

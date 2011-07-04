@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MySql.Data">
-      <HintPath>..\lib\MySql.Data.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fluently.cs" />
+    <Compile Include="IO\DummyFileSource.cs" />
     <Compile Include="IO\IFileSourceAndDestination.cs" />
     <Compile Include="IO\InMemoryTempFolder.cs" />
     <Compile Include="IO\MemoryKeyValueStreamReaderWriter.cs" />
@@ -85,7 +83,6 @@
     <Compile Include="IRecordStreamReader.cs" />
     <Compile Include="IO\KeyFolderWithValueFilesSource.cs" />
     <Compile Include="IO\MemoryKeyValueStore.cs" />
-    <Compile Include="MySqlStorage.cs" />
     <Compile Include="IO\NonLockingMemoryKeyValueReaderWriter.cs" />
     <Compile Include="IO\OneRecordStreamReader.cs" />
     <Compile Include="Util\Splitter.cs" />

@@ -1,27 +1,31 @@
 ﻿namespace Possan.MapReduce.IO
 {
-	public class OneRecordStreamReader : IRecordStreamReader<string, string>
+	public class DummyRecordStreamReader : IRecordStreamReader<string, string>
 	{
 		private readonly string _key;
 		private readonly string _value;
-		private bool hasBeenRead;
+		private int _read;
+		private int _total;
 
-		public OneRecordStreamReader(string key, string value)
+		public DummyRecordStreamReader(string key, string value, int count)
 		{
 			_key = key;
 			_value = value;
-			hasBeenRead = false;
+			_total = count;
+			_read = 0;
 		}
 
 		public bool Read(out string key, out string value)
 		{
-			key = "";
-			value = "";
-			if (hasBeenRead)
+			if (_read >= _total)
+			{
+				key = "";
+				value = "";
 				return false;
+			}
 			key = _key;
 			value = _value;
-			hasBeenRead = true;
+			_read++;
 			return true;
 		}
 

@@ -17,6 +17,8 @@ namespace Possan.MapReduce.Util
 			{
 				// Console.WriteLine("Reducer for " + FileID);
 
+				// buffer input
+
 				var tmp = new NonLockingMemoryKeyValueReaderWriter();
 				using (var rdr = InputFolders.CreateStreamReader(FileID))
 				{
@@ -25,29 +27,31 @@ namespace Possan.MapReduce.Util
 
 				// Console.WriteLine(tmp.Count + " items found in " + FileID);
 
-				using (var wrt = new NonLockingMemoryKeyValueReaderWriter())
-				{
-					var coll = new RecordWriterReducerCollector(wrt);
-					foreach (var kk in tmp.GetKeys())
-					{
-						// Console.WriteLine("Key "+kk+" has "+data[kk].Count+" values.");
-						try
-						{
-							reducer.Reduce(kk, tmp.GetValues(kk), coll, true);
-						}
-						catch (Exception z)
-						{
-							Console.WriteLine("Reducer crashed: " + z);
-						}
-					}
+				// reduce
 
-					if (wrt.Count > 0)
+				var wrt = new NonLockingMemoryKeyValueReaderWriter();
+				var coll = new RecordWriterReducerCollector(wrt);
+				foreach (var kk in tmp.GetKeys())
+				{
+					// Console.WriteLine("Key "+kk+" has "+data[kk].Count+" values.");
+					try
 					{
-						using (var output = OutputFolder.CreateWriter())
-						{
-							output.Write(wrt);
-						}
+						reducer.Reduce(kk, tmp.GetValues(kk), coll, true);
 					}
+					catch (Exception z)
+					{
+						Console.WriteLine("Reducer crashed: " + z);
+					}
+				}
+
+				if (wrt.Count < 1)
+					return;
+				
+				// save output
+
+				using (var output = OutputFolder.CreateWriter())
+				{
+					output.Write(wrt);
 				}
 			}
 		}

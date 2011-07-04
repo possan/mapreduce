@@ -29,7 +29,7 @@ namespace mrtest
 				Console.WriteLine();
 
 				string prefix = "wordcount-" + Guid.NewGuid().ToString().Replace("-", "").Substring(0, 5) + "-";
-				var tempoutput = Path.GetTempPath() + prefix + "-result.txt";				
+				var tempoutput = Path.GetTempPath() + prefix + "-result.txt";
 				var tempinput = args[0];//Path.GetTempPath() + "textfiles";
 	
 				Fluently.Map.Input(new TextFilesFolderSource(tempinput))
