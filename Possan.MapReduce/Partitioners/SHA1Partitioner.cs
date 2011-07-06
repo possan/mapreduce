@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Possan.MapReduce.Partitioners
@@ -25,6 +26,11 @@ namespace Possan.MapReduce.Partitioners
 			if (input.Length == 0)
 				return "";
 			return SHA1(input);
+		}
+
+		public string Partition(string input, int numshards)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

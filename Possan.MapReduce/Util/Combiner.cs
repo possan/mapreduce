@@ -32,11 +32,11 @@ namespace Possan.MapReduce.Util
 				while (inputs.ReadNext(out inputfile))
 				{
 					stp.Queue(new CombinerThread
-					          	{
-					          		outputwriter = writer,
-					          		filesource = inputs,
-					          		FileId = inputfile
-					          	});
+					{
+						outputwriter = writer,
+						filesource = inputs,
+						FileId = inputfile
+					});
 				}
 				Console.WriteLine("Combining files...");
 				stp.WaitAll();

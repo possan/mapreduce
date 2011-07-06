@@ -37,14 +37,15 @@ namespace Possan.MapReduce.Util
 
 		public void Queue(IPooledThread thread)
 		{
+			thread.Thread = new Thread(thread.Run);
 			lock (m_running)
 			{
-				thread.Thread = new Thread(thread.Run);
 				m_notstarted.Enqueue(thread);
-				_queuecount++;
-				if (_queuecount % 1000 == 0 && _queuecount > 0)
-					Console.WriteLine("Threadpool queued " + _queuecount + " jobs...");
-			}
+			} 
+			_queuecount++;
+			if (_queuecount % 1000 == 0 && _queuecount > 0)
+				Console.WriteLine("Threadpool queued " + _queuecount + " jobs...");
+
 		}
 
 		public void Step()
@@ -60,7 +61,7 @@ namespace Possan.MapReduce.Util
 					{
 						test = item.Signal.WaitOne(1, true);
 					}
-					catch (Exception z)
+					catch (Exception)
 					{
 					}
 					if (test)
@@ -75,12 +76,12 @@ namespace Possan.MapReduce.Util
 
 			while (AnyNotStarted && EmptySpace)
 			{
-				Monitor.Enter(m_running);
 				var startme = m_notstarted.Dequeue();
 				startme.Signal = new ManualResetEvent(false);
+				Monitor.Enter(m_running);
 				m_running.Add(startme);
-				startme.Thread.Start();
 				Monitor.Exit(m_running);
+				startme.Thread.Start();
 			}
 		}
 
@@ -105,11 +106,11 @@ namespace Possan.MapReduce.Util
 						+ m_name + "\" waiting... ["
 						+ m_running.Count + " running (of " + m_maxsimultaneous + "), "
 						+ m_notstarted.Count + " in queue, "
-						+ m_done.Count + " done, eta: " + eta + "]");
+						+ m_done.Count + " done, eta: " + eta + " seconds]");
 					nextdump = DateTime.Now.AddSeconds(1);
 					lastnotst = m_notstarted.Count;
 				}
-				Thread.Sleep(10);
+				Thread.Sleep(5);
 			}
 			while (AnyRunning || AnyNotStarted);
 			Console.WriteLine("Threadpool WaitAll Done.");

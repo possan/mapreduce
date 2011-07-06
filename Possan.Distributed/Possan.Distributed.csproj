@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{09DF0495-01F9-4317-BA2E-C7BA5C6A90F4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Possan.Distributed</RootNamespace>
+    <AssemblyName>Possan.Distributed</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="HttpServer">
+      <HintPath>..\lib\HttpServer.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonFx.Json">
+      <HintPath>..\lib\JsonFx.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Client\ClientConfig.cs" />
+    <Compile Include="Client\ClientConnection.cs" />
+    <Compile Include="ISandboxedJob.cs" />
+    <Compile Include="ISandboxProxy.cs" />
+    <Compile Include="Manager\Manager.cs" />
+    <Compile Include="Manager\ManagerConfig.cs" />
+    <Compile Include="Manager\ManagerJob.cs" />
+    <Compile Include="Manager\ManagerJobController.cs" />
+    <Compile Include="Manager\ManagerJobState.cs" />
+    <Compile Include="Manager\ManagerRequestHandler.cs" />
+    <Compile Include="Manager\WorkerInfo.cs" />
+    <Compile Include="Manager\WorkerState.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SandboxProxy.cs" />
+    <Compile Include="SimpleThread.cs" />
+    <Compile Include="Utilities.cs" />
+    <Compile Include="Worker\KeepaliveThread.cs" />
+    <Compile Include="Worker\Worker.cs" />
+    <Compile Include="Worker\WorkerConfig.cs" />
+    <Compile Include="Worker\WorkerJob.cs" />
+    <Compile Include="Worker\WorkerJobController.cs" />
+    <Compile Include="Worker\WorkerRequestHandler.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

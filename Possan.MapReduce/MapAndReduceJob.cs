@@ -49,7 +49,7 @@ namespace Possan.MapReduce
 			if (InputPartitioner != null)
 			{
 				var temp1 = CreateTemporaryStorage(InputFitsInMemory);
-				Util.Splitter.Split(Input, temp1, InputPartitioner);
+				Util.Joiner.Join(Input, temp1, InputPartitioner);
 				Util.Mapper.Map(temp1, mapperoutput, Mapper, prereducer);
 			}
 			else
@@ -63,7 +63,7 @@ namespace Possan.MapReduce
 			{
 				var shuffleroutput = CreateTemporaryStorage(ShufflerFitsInMemory);
 				var reducertemp = CreateTemporaryStorage(ReducerFitsInMemory);
-				Util.Splitter.Split(mapperoutput, shuffleroutput, ShufflePartitioner);
+				Util.Joiner.Join(mapperoutput, shuffleroutput, ShufflePartitioner);
 				Util.Reducer.Reduce(shuffleroutput, reducertemp, Reducer);
 				Util.Combiner.Combine(reducertemp, Output);
 			}

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Possan.MapReduce;
 
-namespace mrtest
+namespace WordCount
 {
 	class TestReducer : IReducer
 	{

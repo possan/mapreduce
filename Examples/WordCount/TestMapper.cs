@@ -3,7 +3,7 @@ using System;
 using System.Text;
 using Possan.MapReduce;
 
-namespace mrtest
+namespace WordCount
 {
 	class TestMapper : IMapper
 	{

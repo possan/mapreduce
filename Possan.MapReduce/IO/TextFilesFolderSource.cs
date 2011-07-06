@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Possan.MapReduce;
-using Possan.MapReduce.IO;
 
-namespace ArticleKeywords.IO
+namespace Possan.MapReduce.IO
 {
 	public class TextFilesFolderSource : IFileSource<string, string>
 	{

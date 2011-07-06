@@ -69,9 +69,12 @@ namespace Possan.MapReduce.IO
 
 			Console.WriteLine("Buffering files in " + _path);
 
-			var files = Directory.GetFiles(_path);
-			foreach (var file in files)
-				index.Enqueue(file);
+			if (Directory.Exists(_path))
+			{
+				var files = Directory.GetFiles(_path);
+				foreach (var file in files)
+					index.Enqueue(file);
+			}
 
 			Console.WriteLine("Done.");
 		}

@@ -98,6 +98,7 @@ namespace Possan.MapReduce.Util
 							kidx++;
 						}
 					}
+					threadpool.Step();
 				}
 			}
 		}
@@ -135,7 +136,7 @@ namespace Possan.MapReduce.Util
 				ft.mapper = mapper;
 				ft.reducer = prereducer;
 				ft.FileIDs.Add(inputfileid);
-				ft.threadpool = threadpool2;
+				ft.threadpool = threadpool;
 				threadpool.Queue(ft);
 				threadpool.Step();
 			}
@@ -145,13 +146,13 @@ namespace Possan.MapReduce.Util
 			threadpool.WaitAll();
 			t1.End();
 			Console.WriteLine("Mapper file threads finished.");
-
+			/*
 			Console.WriteLine("Waiting for mapper threads to finish...");
 			var t2 = new Timing("Inner mapper");
 			threadpool2.WaitAll();
 			t2.End();
 			Console.WriteLine("Mapper threads finished.");
-
+			*/
 			GC.Collect();
 		}
 	}

@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using ArticleKeywords.IO;
 using Possan.MapReduce;
 using Possan.MapReduce.IO;
 using Possan.MapReduce.Partitioners;
 using Possan.MapReduce.Util;
 
-namespace mrtest
+namespace WordCount
 {
 	class Program
 	{
