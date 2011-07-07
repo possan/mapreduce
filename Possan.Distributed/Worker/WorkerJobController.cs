@@ -36,8 +36,9 @@ namespace Possan.Distributed.Worker
 			if (jo.ContainsKey("jobtype"))
 				newjob.JobType = jo["jobtype"].ToString();
 
+			// parse args...
 			if (jo.ContainsKey("jobargs"))
-				newjob.JobArgs = new List<string>((string[])jo["jobargs"]);
+				Utilities.FillArgsFromJson(newjob.JobArgs, jo["jobargs"]);
 
 			newjob.MyUrl = "http://" + _worker.Config.Hostname + ":" + _worker.Config.Port;
 

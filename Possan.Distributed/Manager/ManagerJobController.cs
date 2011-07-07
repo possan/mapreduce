@@ -69,8 +69,9 @@ namespace Possan.Distributed.Manager
 			if (jo.ContainsKey("jobtype"))
 				newjob.JobType = jo["jobtype"].ToString();
 
+			newjob.JobArgs = new DefaultJobArgs();
 			if (jo.ContainsKey("jobargs"))
-				newjob.JobArgs = new List<string>((string[])jo["jobargs"]);
+				Utilities.FillArgsFromJson(newjob.JobArgs, jo["jobargs"]);
 
 			Console.WriteLine("ManagerJobController: Trying to get " + numworkers + " instances.");
 
@@ -83,21 +84,10 @@ namespace Possan.Distributed.Manager
 				var winfo = GetWorkerByUrl(workerurl);
 				winfo.RemoteJobId = "";
 				var wc = new WebClient();
-				var jobinfo = new StringBuilder();
-				jobinfo.Append("{\"jobtype\":\"").Append(Utilities.EscapeJson(newjob.JobType)).Append("\",\"jobargs\":[");
-				for (int i = 0; i < newjob.JobArgs.Count; i++)
-				{
-					if (i > 0)
-						jobinfo.Append(",");
-					var arg = newjob.JobArgs[i];
-					jobinfo.Append("\"").Append(Utilities.EscapeJson(arg)).Append("\"");
-				}
-
-				var callbackurl = "http://" + _manager.Config.Hostname + ":" + _manager.Config.Port + "/job/" + newjob.ID + "/worker-callback";
-				jobinfo.Append("],\"callback\":\"").Append(Utilities.EscapeJson(callbackurl)).Append("\"}");
+				var jobinfo = BuildCreateJobData(newjob);
 				try
 				{
-					winfo.RemoteJobId = wc.UploadString(Utilities.CombineURL(winfo.URL, "/createjob"), jobinfo.ToString());
+					winfo.RemoteJobId = wc.UploadString(Utilities.CombineURL(winfo.URL, "/createjob"), jobinfo);
 				}
 				catch (Exception z)
 				{
@@ -116,6 +106,18 @@ namespace Possan.Distributed.Manager
 
 			m_jobs.Add(newjob);
 			return newjob.ID;
+		}
+
+		private string BuildCreateJobData(ManagerJob newjob)
+		{
+			var jobinfo = new StringBuilder();
+			jobinfo.Append("{\"jobtype\":\"").Append(Utilities.EscapeJson(newjob.JobType)).Append("\",");
+			var argjson = Utilities.BuildJsonFromArgs(newjob.JobArgs);
+			if (!string.IsNullOrEmpty(argjson))
+				jobinfo.Append("\"jobargs\":" + argjson + ",");
+			var callbackurl = "http://" + _manager.Config.Hostname + ":" + _manager.Config.Port + "/job/" + newjob.ID + "/worker-callback";
+			jobinfo.Append("\"callback\":\"").Append(Utilities.EscapeJson(callbackurl)).Append("\"}");
+			return jobinfo.ToString();
 		}
 
 		public void AddAssembly(string jobid, byte[] data)

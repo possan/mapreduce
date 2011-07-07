@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -61,6 +62,54 @@ namespace Possan.Distributed
 		public static string EscapeJson(string input)
 		{
 			return EscapeJson(input, true);
+		}
+
+
+		public static void FillArgsFromJson(IJobArgs args, object jsonvalue)
+		{
+			if( jsonvalue == null )
+				return;
+
+			var strings = jsonvalue as string[];
+			if( strings == null )
+				return;
+			
+			foreach(var s in strings)
+			{
+				var i = s.IndexOf(":=");
+				if( i == -1 )
+					continue;
+
+				args.Add(s.Substring(0,i), s.Substring(i+2));
+			}
+		}
+
+		public static string BuildJsonFromArgs(IJobArgs args)
+		{ 
+			if (args == null)
+				return "";
+
+			var keys = new List<string>(args.GetKeys());
+			if (keys.Count == 0)
+				return "";
+
+			var sb = new StringBuilder();
+			sb.Append("[");
+			bool firstkey = true;
+			foreach (var k in keys)
+			{
+				foreach (var v in args.GetValues(k))
+				{
+					if (!firstkey)
+						sb.Append(",");
+					sb.Append("\"");
+					sb.Append(EscapeJson(k + ":=" + v));
+					sb.Append("\"");
+					firstkey = false;
+				}
+			}
+			sb.Append("]");
+			return sb.ToString();
 		}
 	}
 }

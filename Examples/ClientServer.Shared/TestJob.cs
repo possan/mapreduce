@@ -5,9 +5,9 @@ namespace ClientServer.Shared
 {
 	public class TestJob : ISandboxedJob
 	{
-		public string Run(string[] args)
+		public string Run(IJobArgs args)
 		{
-			Console.WriteLine("TestJob called, args: " + string.Join(", ", args));
+			Console.WriteLine("TestJob called");
 			return "";
 		}
 	}

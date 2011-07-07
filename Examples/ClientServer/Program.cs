@@ -4,6 +4,7 @@ using Possan.Distributed.Client;
 using Possan.Distributed.Manager;
 using Possan.Distributed.Worker;
 using Possan.MapReduce.Distributed;
+using Possan.MapReduce.Util;
 
 namespace ClientServer
 {
@@ -12,6 +13,7 @@ namespace ClientServer
 		static void Main(string[] args)
 		{
 			int baseport = 7890;
+
 
 			// set up manager
 			var mgr = new Manager(new ManagerConfig { Port = baseport });
@@ -50,13 +52,15 @@ namespace ClientServer
 			client.Run();
 			*/
 
+			var timer = new Timing("All");
+
 			var conn = new MapReduceConnection();
 			conn.ManagerUrl = "http://127.0.0.1:" + baseport;
 			
 			conn.InputFolder = "c:\\temp\\smalltextfiles";
 			// conn.InputType = "Possan.MapReduce.IO.KeyFolderWithValueFilesSource, Possan.MapReduce";
 			conn.InputType = "Possan.MapReduce.IO.TextFilesFolderSource, Possan.MapReduce";
-
+			
 			var suffix = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
 			conn.TempFolder = "c:\\temp\\MR4\\temp-"+suffix;
 			
@@ -65,14 +69,23 @@ namespace ClientServer
 			
 			conn.Assemblies.Add("ClientServer.Shared.dll");
 			
-			conn.Instances = 5;
+			conn.Instances = 8;
+
+			conn.NumInputPartitions = 20;
+			conn.NumReducerPartitions = 20;
+
+			// conn.
 			
 			conn.InputPartitionerTypeName = "Possan.MapReduce.Partitioners.MD5Partitioner, Possan.MapReduce";
+			conn.ShufflerPartitionerTypeName = "Possan.MapReduce.Partitioners.FirstCharacterPartitioner, Possan.MapReduce";
+			conn.CombinePartitionerTypeName = "Possan.MapReduce.Partitioners.FirstCharacterPartitioner, Possan.MapReduce";
 			
 			conn.MapperTypeName = "ClientServer.Shared.TestMapper, ClientServer.Shared";
 			conn.ReducerTypeName = "ClientServer.Shared.TestReducer, ClientServer.Shared";
 			
 			conn.Run();
+
+			timer.End();
 
 			// kill workers 
 			foreach (var w in workers)
@@ -80,6 +93,7 @@ namespace ClientServer
 
 			// stop manager
 			mgr.Stop();
+			
 		}
 	}
 }

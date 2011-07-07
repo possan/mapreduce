@@ -53,6 +53,10 @@
       <Project>{BAC0D666-52BB-4005-AE03-500C38EDDC5E}</Project>
       <Name>Possan.MapReduce.Distributed</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Possan.MapReduce\Possan.MapReduce.csproj">
+      <Project>{EE995F6D-09ED-4E8C-B7D0-DB59E09D9C82}</Project>
+      <Name>Possan.MapReduce</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

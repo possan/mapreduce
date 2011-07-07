@@ -27,19 +27,15 @@ namespace Possan.MapReduce.Distributed
 			foreach (var o in outputs)
 			{
 				Console.WriteLine("  " + o);
-				// var w = new TabFileFolderWriter(o);
 				var writer = Activator.CreateInstance(Type.GetType(outputtype), new object[] { o }) as IFileDestination<string, string>;
 				outputwriters.Add(writer);
 			}
 
 			var partitioner = Activator.CreateInstance(Type.GetType(partitionertype)) as IShardingPartitioner;
-
 			var inputreader = Activator.CreateInstance(Type.GetType(inputtype), new object[] { inputfolder }) as IFileSource<string, string>;
-
 			var inputs = new List<IFileSource<string, string>>();
 			inputs.Add(inputreader);
-
-			Splitter.Split(inputs, outputwriters, partitioner);
+			Splitter.Split(inputs, outputwriters, partitioner, false);
 
 			return "Partition result.";
 		}

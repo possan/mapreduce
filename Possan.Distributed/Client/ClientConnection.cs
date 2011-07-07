@@ -11,32 +11,22 @@ namespace Possan.Distributed.Client
 		private readonly ClientConfig _cfg;
 
 		public string JobId { get; set; }
+		public ClientConnectionState State { get; set; }
 
 		public ClientConnection(ClientConfig cfg)
 		{
 			JobId = "";
 			_cfg = cfg;
+			State = ClientConnectionState.NotStarted;
 		}
-		
-		public bool Start()
+
+		public void Start()
 		{
 			var wc = new WebClient();
 
 			Console.WriteLine("Create job");
 
-			var jobinfo = new StringBuilder();
-			jobinfo.Append("{\"jobtype\":\"").Append(Utilities.EscapeJson(_cfg.JobType)).Append("\",\"jobargs\":[");
-			for (int i = 0; i < _cfg.JobArgs.Count; i++)
-			{
-				if (i > 0)
-					jobinfo.Append(",");
-				var arg = _cfg.JobArgs[i];
-				jobinfo.Append("\"").Append(Utilities.EscapeJson(arg)).Append("\"");
-			}
-
-			jobinfo.Append("],\"instances\":" + _cfg.Instances + "}");
-
-			JobId = wc.UploadString(Utilities.CombineURL(_cfg.ManagerUrl, "/createjob"), jobinfo.ToString());
+			JobId = wc.UploadString(Utilities.CombineURL(_cfg.ManagerUrl, "/createjob"), BuildJobInfoJson());
 			Console.WriteLine("Created manager job " + JobId);
 
 			Console.WriteLine("Uploading assemblies...");
@@ -47,38 +37,76 @@ namespace Possan.Distributed.Client
 				wc.UploadData(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/assemblies"), File.ReadAllBytes(a));
 			}
 			Console.WriteLine("Uploading done.");
-			 
-			Console.WriteLine("Start job.");
-			wc.DownloadString(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/start"));
 
-			return true;
+			Console.WriteLine("Starting job "+JobId);
+			wc.DownloadString(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/start"));
+			State = ClientConnectionState.Started;
+			Console.WriteLine("Job " + JobId+" started."); 
+		}
+
+		private string BuildJobInfoJson()
+		{
+			var jobinfo = new StringBuilder();
+			jobinfo.Append("{\"jobtype\":\"").Append(Utilities.EscapeJson(_cfg.JobType)).Append("\",");
+			var argjson = Utilities.BuildJsonFromArgs(_cfg.JobArgs);
+			if (!string.IsNullOrEmpty(argjson))
+				jobinfo.Append("\"jobargs\":" + argjson + ",");
+			jobinfo.Append("\"instances\":" + _cfg.Instances + "}");
+			return jobinfo.ToString();
 		}
 
 
-		public bool Wait()
-		{ 
-			var wc = new WebClient();
-			 
+		public void Poll()
+		{
+			if( State != ClientConnectionState.Started )
+				return;
+			var status = "";
+			try
+			{
+				var wc = new WebClient();
+				status = wc.DownloadString(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/status")).ToLower();
+			}
+			catch (Exception z)
+			{
+
+			}
+			if (status == "done")
+			{
+				Console.WriteLine("Job " + JobId + " is now done.");
+				State = ClientConnectionState.Done;
+			}
+			else if (status != "working")
+				Console.WriteLine("Unknown job status: " + status); 
+		}
+
+		public void Wait()
+		{
+			if( State != ClientConnectionState.Started )
+				return;
+
+			Console.WriteLine("Waiting for job "+JobId+" to finish...");
 			bool done = false;
 			do
 			{
-				var status = wc.DownloadString(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/status")).ToLower();
-				if (status == "done")
-					done = true;
-				else if (status != "working")
-					Console.WriteLine("Unknown job status: " + status);
+				Poll();
 				Thread.Sleep(1000);
 			}
-			while (!done);
-
-			return true;
+			while (State != ClientConnectionState.Done);
+			Console.WriteLine("Job " + JobId + " finished.");
 		}
 
 		public bool Run()
-		{ 
+		{
 			Start();
 			Wait();
 			return true;
 		}
+	}
+
+	public enum ClientConnectionState
+	{
+		NotStarted = 0,
+		Started = 1,
+		Done = 2
 	}
 }

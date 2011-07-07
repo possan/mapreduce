@@ -2,6 +2,6 @@
 {
 	public interface ISandboxedJob
 	{
-		string Run(string[] args);
+		string Run(IJobArgs args);
 	}
 }

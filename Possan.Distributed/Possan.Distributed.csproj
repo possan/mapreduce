@@ -47,6 +47,9 @@
   <ItemGroup>
     <Compile Include="Client\ClientConfig.cs" />
     <Compile Include="Client\ClientConnection.cs" />
+    <Compile Include="Client\ClientConnectionCollection.cs" />
+    <Compile Include="DefaultJobArgs.cs" />
+    <Compile Include="IJobArgs.cs" />
     <Compile Include="ISandboxedJob.cs" />
     <Compile Include="ISandboxProxy.cs" />
     <Compile Include="Manager\Manager.cs" />
@@ -67,6 +70,12 @@
     <Compile Include="Worker\WorkerJob.cs" />
     <Compile Include="Worker\WorkerJobController.cs" />
     <Compile Include="Worker\WorkerRequestHandler.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Possan.MapReduce\Possan.MapReduce.csproj">
+      <Project>{EE995F6D-09ED-4E8C-B7D0-DB59E09D9C82}</Project>
+      <Name>Possan.MapReduce</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

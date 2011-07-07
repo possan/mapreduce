@@ -16,10 +16,12 @@ namespace Possan.MapReduce.Distributed
 		public string MapperTypeName;
 		public string ReducerTypeName;
 		public string PreReducerTypeName;
-		public string ShufflerPartitioner;
+		public string ShufflerPartitionerTypeName;
+		public string CombinePartitionerTypeName;
 
 		public int Instances;
 		public int NumInputPartitions;
+		public int NumReducerPartitions;
 
 		public List<string> Assemblies;
 		public string OutputType;
@@ -35,14 +37,19 @@ namespace Possan.MapReduce.Distributed
 			OutputFolder = "";
 			OutputType = "";
 
-			Instances = 5;
-			NumInputPartitions = 10;
+			Instances = 1;
+			NumInputPartitions = 4;
+			NumReducerPartitions = 7;
 
 			InputPartitionerTypeName = "";
 			MapperTypeName = "";
 			ReducerTypeName = "";
 			PreReducerTypeName = "";
-			ShufflerPartitioner = "";
+			ShufflerPartitionerTypeName = "";
+
+			InputPartitionerTypeName = "Possan.MapReduce.Partitioners.MD5Partitioner, Possan.MapReduce";
+			ShufflerPartitionerTypeName = "Possan.MapReduce.Partitioners.MD5Partitioner, Possan.MapReduce";
+			CombinePartitionerTypeName = "Possan.MapReduce.Partitioners.MD5Partitioner, Possan.MapReduce";
 
 			Assemblies = new List<string>();
 			Assemblies.Add("Possan.Distributed.dll");
@@ -52,97 +59,103 @@ namespace Possan.MapReduce.Distributed
 		public void Run()
 		{
 			var TempRW = "Possan.MapReduce.IO.TabFileFolder, Possan.MapReduce";
-			
+
 			// partition input... N outputs
 
 			Console.WriteLine("==============================================");
 
-			{
-				var cfg = new ClientConfig();
-				cfg.Assemblies = Assemblies;
-				cfg.ManagerUrl = ManagerUrl;
-				cfg.Instances = 1;
-				cfg.JobType = "Possan.MapReduce.Distributed.PartitionInputJob, Possan.MapReduce.Distributed";
-				cfg.JobArgs.Add(InputPartitionerTypeName);
-				cfg.JobArgs.Add(InputType);
-				cfg.JobArgs.Add(TempRW);
-				cfg.JobArgs.Add(InputFolder);
-				for (int k = 0; k < NumInputPartitions; k++)
-					cfg.JobArgs.Add(TempFolder + "\\partitioned-input-" + k);
-				var conn = new ClientConnection(cfg);
-				conn.Run();
-			}
+			var partitioners = new ClientConnectionCollection();
+			var partitionconfig = new ClientConfig();
+			partitionconfig.Assemblies = Assemblies;
+			partitionconfig.ManagerUrl = ManagerUrl;
+			partitionconfig.Instances = 1;
+			partitionconfig.JobType = "Possan.MapReduce.Distributed.ShuffleJob, Possan.MapReduce.Distributed";
+			partitionconfig.JobArgs.Add("partitioner", InputPartitionerTypeName);
+			partitionconfig.JobArgs.Add("sort", "1");
+			partitionconfig.JobArgs.Add("input", InputType + "=" + InputFolder);
+			for (var k = 0; k < NumInputPartitions; k++)
+				partitionconfig.JobArgs.Add("output", TempRW + "=" + TempFolder + "\\partitioned-input-" + k);
+			partitioners.Add(partitionconfig);
+			partitioners.StartAllAndWait();
 
 			Console.WriteLine("==============================================");
-
 
 			// run N mappers+prereducers + join to N reducers
+			var mappers = new ClientConnectionCollection();
+			for (int k = 0; k < NumInputPartitions; k++)
 			{
-				var allmappers = new List<ClientConnection>();
-				for (int k = 0; k < NumInputPartitions; k++)
-				{
-
-					var cfg = new ClientConfig();
-					cfg.Assemblies = Assemblies;
-					cfg.ManagerUrl = ManagerUrl;
-					cfg.Instances = Instances;
-					cfg.JobType = "Possan.MapReduce.Distributed.MapJob, Possan.MapReduce.Distributed";
-					cfg.JobArgs.Add(MapperTypeName);
-					cfg.JobArgs.Add(TempRW);
-					cfg.JobArgs.Add(TempRW);
-					cfg.JobArgs.Add(TempFolder + "\\partitioned-input-" + k);
-					cfg.JobArgs.Add(TempFolder + "\\mapper-output-" + k);
-
-					var conn = new ClientConnection(cfg);
-					conn.Start();
-					allmappers.Add(conn);
-				}
-
-				Console.WriteLine("==============================================");
-				
-				for (int k = 0; k < NumInputPartitions; k++)
-				{
-					allmappers[k].Wait();
-				}
+				var mapperconfig = new ClientConfig();
+				mapperconfig.Assemblies = Assemblies;
+				mapperconfig.ManagerUrl = ManagerUrl;
+				mapperconfig.Instances = 1;
+				mapperconfig.JobType = "Possan.MapReduce.Distributed.MapJob, Possan.MapReduce.Distributed";
+				mapperconfig.JobArgs.Add("mapper", MapperTypeName);
+				mapperconfig.JobArgs.Add("input", TempRW + "=" + TempFolder + "\\partitioned-input-" + k);
+				mapperconfig.JobArgs.Add("output", TempRW + "=" + TempFolder + "\\mapper-output-" + k);
+				mappers.Add(mapperconfig);
 			}
+			mappers.StartAllAndWait();
 
 			Console.WriteLine("==============================================");
 
+			// shuffle/sort to N reducers
 
-			/*
-			// run N reducers 
+			var sorters = new ClientConnectionCollection();
+			for (int k = 0; k < NumInputPartitions; k++)
 			{
-				var cfg = new ClientConfig();
-				cfg.Assemblies = Assemblies;
-				cfg.ManagerUrl = ManagerUrl;
-				cfg.Instances = 1;
-				cfg.JobType = "Possan.MapReduce.Distributed.MapJob, Possan.MapReduce.Distributed";
-				cfg.JobArgs.Add("a");
-				cfg.JobArgs.Add("b");
-				cfg.JobArgs.Add("c");
-
-				var conn = new ClientConnection(cfg);
-				conn.Run();
+				var sorterconfig = new ClientConfig();
+				sorterconfig.Assemblies = Assemblies;
+				sorterconfig.ManagerUrl = ManagerUrl;
+				sorterconfig.Instances = 1;
+				sorterconfig.JobType = "Possan.MapReduce.Distributed.ShuffleJob, Possan.MapReduce.Distributed";
+				sorterconfig.JobArgs.Add("partitioner", ShufflerPartitionerTypeName);
+				sorterconfig.JobArgs.Add("sort", "1");
+				sorterconfig.JobArgs.Add("input", TempRW + "=" + TempFolder + "\\mapper-output-" + k);
+				for (var u = 0; u < NumReducerPartitions; u++)
+					sorterconfig.JobArgs.Add("output", TempRW + "=" + TempFolder + "\\reducer-input-" + u);
+				sorters.Add(sorterconfig);
 			}
+			sorters.StartAllAndWait();
 
-			// join data 
+			Console.WriteLine("==============================================");
 
-			*/
+			// run N reducers 
 
-			/*
+			var reducers = new ClientConnectionCollection();
+			for (int k = 0; k < NumReducerPartitions; k++)
 			{
-				var cfg = new ClientConfig();
-				cfg.Assemblies = Assemblies;
-				cfg.ManagerUrl = ManagerUrl;
-				cfg.Instances = Instances;
-				cfg.JobType = "Possan.MapReduce.Distributed.MapJob, Possan.MapReduce.Distributed";
-				cfg.JobArgs.Add("a");
-				cfg.JobArgs.Add("b");
-				cfg.JobArgs.Add("c");
+				var reducerconfig = new ClientConfig();
+				reducerconfig.Assemblies = Assemblies;
+				reducerconfig.ManagerUrl = ManagerUrl;
+				reducerconfig.Instances = 1;
+				reducerconfig.JobType = "Possan.MapReduce.Distributed.ReduceJob, Possan.MapReduce.Distributed";
+				reducerconfig.JobArgs.Add("reducer", ReducerTypeName);
+				reducerconfig.JobArgs.Add("input", TempRW + "=" + TempFolder + "\\reducer-input-" + k);
+				reducerconfig.JobArgs.Add("output", TempRW + "=" + TempFolder + "\\reducer-output-" + k);
+				reducers.Add(reducerconfig);
+			}
+			reducers.StartAllAndWait();
+			
+			Console.WriteLine("==============================================");
+			
+			// combine
 
-				var conn = new ClientConnection(cfg);
-				conn.Run();
-			}*/
+			var combiners = new ClientConnectionCollection();
+
+			var combinerconfig = new ClientConfig();
+			combinerconfig.Assemblies = Assemblies;
+			combinerconfig.ManagerUrl = ManagerUrl;
+			combinerconfig.Instances = 1;
+			combinerconfig.JobType = "Possan.MapReduce.Distributed.ShuffleJob, Possan.MapReduce.Distributed";
+			combinerconfig.JobArgs.Add("partitioner", CombinePartitionerTypeName );
+			combinerconfig.JobArgs.Add("sort", "1");
+			for (var u = 0; u < NumReducerPartitions; u++)
+				combinerconfig.JobArgs.Add("input", TempRW + "=" + TempFolder + "\\reducer-output-" + u);
+			combinerconfig.JobArgs.Add("output", TempRW + "=" + TempFolder + "\\combiner-output");
+			combiners.Add(combinerconfig);
+			combiners.StartAllAndWait();
+
+			Console.WriteLine("==============================================");
 		}
 	}
 }

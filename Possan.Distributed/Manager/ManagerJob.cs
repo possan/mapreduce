@@ -12,7 +12,7 @@ namespace Possan.Distributed.Manager
 		public List<WorkerInfo> Workers;
 		public ManagerJobState State;
 		public string JobType;
-		public List<string> JobArgs;
+		public IJobArgs JobArgs;
 
 		public ManagerJob()
 		{
@@ -21,7 +21,7 @@ namespace Possan.Distributed.Manager
 			Workers = new List<WorkerInfo>();
 			State = ManagerJobState.Preparing;
 			JobType = "";
-			JobArgs = new List<string>();
+			JobArgs = new DefaultJobArgs();
 		}
 
 		public override void InnerRun()
@@ -42,18 +42,18 @@ namespace Possan.Distributed.Manager
 
 			Console.WriteLine("Manager job: Wait for all to be done...");
 
-			bool _any_not_done = true;
-			while (_any_not_done)
+			bool anyNotDone = true;
+			while (anyNotDone)
 			{
-				_any_not_done = false;
+				anyNotDone = false;
 				foreach (var w in Workers)
 				{
 					if (w.State != WorkerState.JobDone)
-						_any_not_done = true;
+						anyNotDone = true;
 					else
 						Console.WriteLine("Worker " + w.URL + " is " + w.State);
 				}
-				Thread.Sleep(2500);
+				Thread.Sleep(1000);
 			}
 
 			State = ManagerJobState.Done;

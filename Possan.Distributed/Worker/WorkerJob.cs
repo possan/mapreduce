@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Reflection;
-using System.Threading;
 
 namespace Possan.Distributed.Worker
 {
@@ -15,42 +14,32 @@ namespace Possan.Distributed.Worker
 		public List<Assembly> LoadedAssemblies;
 		private AppDomain Sandbox;
 		public string JobType;
-		public List<string> JobArgs;
-
-		static Random r = new Random();
-
+		public IJobArgs JobArgs;
+		
 		public WorkerJob()
 		{
 			LoadedAssemblies = new List<Assembly>();
 			Sandbox = AppDomain.CreateDomain("Temp sandbox");
 			JobType = "";
-			JobArgs = new List<string>();
-
+			JobArgs = new DefaultJobArgs();
 		}
 
 		public override void InnerRun()
 		{
 			// kör, bara kör!
 			Console.WriteLine("WorkerJob: Started, JobType: " + JobType);
-			foreach (var a in JobArgs)
-				Console.WriteLine("WorkerJob: JobArgs[]: " + a);
 
 			try
 			{
 				var sandboxtool = Sandbox.CreateInstanceAndUnwrap("Possan.Distributed", "Possan.Distributed.SandboxProxy") as ISandboxProxy;
-				// Console.WriteLine("created sandboxtool: " + sandboxtool);
-				var ret = sandboxtool.RunJob(JobType, JobArgs.ToArray());
+				if (sandboxtool != null)
+					sandboxtool.RunJob(JobType, JobArgs);
 			}
 			catch (Exception z)
 			{
 				Console.WriteLine("Creating mapper failed: " + z);
 			}
 
-			// var d = r.Next(2000, 5000);
-			// Console.WriteLine("WorkerJob: Sleep for " + d + " ms.");
-			// Thread.Sleep(d);
-
-			// Console.WriteLine("WorkerJob: Worker, tell manager...");
 			var wc = new WebClient();
 			var postdata = "{\"url\":\"" + MyUrl + "\",\"job\":\"" + ID + "\"}";
 			wc.UploadString(CallbackUrl, postdata);
