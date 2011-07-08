@@ -33,6 +33,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HttpServer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d7063c47c583695a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\HttpServer.dll</HintPath>
+    </Reference>
+    <Reference Include="JsonFx.Json, Version=1.0.904.1707, Culture=neutral, PublicKeyToken=315052dd637f8a52, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\lib\JsonFx.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,9 +53,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Possan.Distributed.Sandbox\Possan.Distributed.Sandbox.csproj">
+      <Project>{02255D19-E6E4-42F9-B530-7978E5AB1DFD}</Project>
+      <Name>Possan.Distributed.Sandbox</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Possan.Distributed\Possan.Distributed.csproj">
       <Project>{09DF0495-01F9-4317-BA2E-C7BA5C6A90F4}</Project>
       <Name>Possan.Distributed</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Possan.MapReduce.Distributed.Jobs\Possan.MapReduce.Distributed.Jobs.csproj">
+      <Project>{3F9463D8-36F4-4BE5-A7B4-2562BE3B71C6}</Project>
+      <Name>Possan.MapReduce.Distributed.Jobs</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Possan.MapReduce.Distributed\Possan.MapReduce.Distributed.csproj">
       <Project>{BAC0D666-52BB-4005-AE03-500C38EDDC5E}</Project>
@@ -56,6 +72,10 @@
     <ProjectReference Include="..\..\Possan.MapReduce\Possan.MapReduce.csproj">
       <Project>{EE995F6D-09ED-4E8C-B7D0-DB59E09D9C82}</Project>
       <Name>Possan.MapReduce</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ClientServer.Shared\ClientServer.Shared.csproj">
+      <Project>{1BC8B7D4-2A79-4099-94DF-6F79DB852462}</Project>
+      <Name>ClientServer.Shared</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

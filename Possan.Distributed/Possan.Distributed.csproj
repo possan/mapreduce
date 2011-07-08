@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,7 +25,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -39,10 +39,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client\ClientConfig.cs" />
@@ -50,8 +46,6 @@
     <Compile Include="Client\ClientConnectionCollection.cs" />
     <Compile Include="DefaultJobArgs.cs" />
     <Compile Include="IJobArgs.cs" />
-    <Compile Include="ISandboxedJob.cs" />
-    <Compile Include="ISandboxProxy.cs" />
     <Compile Include="Manager\Manager.cs" />
     <Compile Include="Manager\ManagerConfig.cs" />
     <Compile Include="Manager\ManagerJob.cs" />
@@ -61,7 +55,6 @@
     <Compile Include="Manager\WorkerInfo.cs" />
     <Compile Include="Manager\WorkerState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SandboxProxy.cs" />
     <Compile Include="SimpleThread.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Worker\KeepaliveThread.cs" />
@@ -72,6 +65,10 @@
     <Compile Include="Worker\WorkerRequestHandler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Possan.Distributed.Sandbox\Possan.Distributed.Sandbox.csproj">
+      <Project>{02255D19-E6E4-42F9-B530-7978E5AB1DFD}</Project>
+      <Name>Possan.Distributed.Sandbox</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Possan.MapReduce\Possan.MapReduce.csproj">
       <Project>{EE995F6D-09ED-4E8C-B7D0-DB59E09D9C82}</Project>
       <Name>Possan.MapReduce</Name>

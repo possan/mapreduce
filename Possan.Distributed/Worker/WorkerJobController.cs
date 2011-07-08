@@ -48,12 +48,12 @@ namespace Possan.Distributed.Worker
 			return newjob.ID;
 		}
 
-		public void AddAssembly(string jobid, byte[] data)
+		public void AddAssembly(string jobid, string filename, byte[] data)
 		{
 			var job = GetJobById(jobid);
 			if (job == null)
 				return;
-			job.AddAssembly(data);
+			job.AddAssembly(filename, data);
 			// m_jobs.ass
 		}
 

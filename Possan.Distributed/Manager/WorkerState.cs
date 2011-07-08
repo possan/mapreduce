@@ -1,12 +1,13 @@
 ﻿namespace Possan.Distributed.Manager
 {
-	enum WorkerState
+	public enum WorkerState
 	{
 		Dead,
 		Idle,
 		Allocated,
 		JobCreated,
 		JobRunning,
-		JobDone
+		JobDone,
+		Crashed
 	}
 }

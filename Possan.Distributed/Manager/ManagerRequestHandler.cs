@@ -46,8 +46,9 @@ namespace Possan.Distributed.Manager
 			if (m2.Success)
 			{
 				var jobid = m2.Groups[1].Value;
-				var bytes  = Utilities.ReadAllBytes(request.Body);
-				_manager.Controller.AddAssembly(jobid, bytes);
+				var bytes = Utilities.ReadAllBytes(request.Body);
+				var filename = request.QueryString["name"].Value;
+				_manager.Controller.AddAssembly(jobid, filename, bytes);
 				response.Body = new MemoryStream(response.Encoding.GetBytes("OK"));
 				return true;
 			}

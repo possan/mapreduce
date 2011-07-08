@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace Possan.Distributed
+namespace Possan.Distributed.Sandbox
 {
 	public class SandboxProxy : MarshalByRefObject, ISandboxProxy
 	{
-		public string RunJob(AppDomain domain, string jobtype, IJobArgs args)
+		public string RunJob(AppDomain domain, string jobtype, ISandboxedJobArgs args)
 		{
 			string ret = "";
 			Console.WriteLine("SandboxProxy: Trying to create a " + jobtype);

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Possan.Distributed.Client")]
+[assembly: AssemblyTitle("Possan.Distributed.Sandbox")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("Possan.Distributed.Client")]
+[assembly: AssemblyProduct("Possan.Distributed.Sandbox")]
 [assembly: AssemblyCopyright("Copyright © Microsoft 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b8c13999-ef48-4801-98f4-57b2a593e984")]
+[assembly: Guid("7af109d0-aa6f-4ab9-9a66-f395b26ffb46")]
 
 // Version information for an assembly consists of the following four values:
 //

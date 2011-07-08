@@ -2,12 +2,13 @@
 
 namespace Possan.Distributed.Manager
 {
-	class WorkerInfo
+	public class WorkerInfo
 	{
 		public string URL;
 		public DateTime LastKeepalive;
 		public string RemoteJobId;
 		public WorkerState State;
+		public DateTime StartTime;
 		public bool IsAlive { get { return DateTime.Now.Subtract(LastKeepalive).TotalSeconds < 20; } }
 
 		public WorkerInfo()
@@ -15,6 +16,7 @@ namespace Possan.Distributed.Manager
 			State = WorkerState.Dead;
 			URL = "";
 			RemoteJobId = "";
+			StartTime = DateTime.Now;
 			LastKeepalive = DateTime.MinValue;
 		}
 	}

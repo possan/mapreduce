@@ -1,6 +1,6 @@
 ﻿namespace Possan.Distributed.Manager
 {
-	enum ManagerJobState
+	public enum ManagerJobState
 	{
 		Preparing,
 		Working,

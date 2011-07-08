@@ -31,29 +31,26 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="RandomPointInCircleMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomPointInCircleMapper.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TestJob.cs" />
-    <Compile Include="TestMapper.cs" />
-    <Compile Include="TestReducer.cs" />
+    <Compile Include="TestMapper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TestReducer.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Possan.Distributed\Possan.Distributed.csproj">
-      <Project>{09DF0495-01F9-4317-BA2E-C7BA5C6A90F4}</Project>
-      <Name>Possan.Distributed</Name>
+    <ProjectReference Include="..\..\Possan.Distributed.Sandbox\Possan.Distributed.Sandbox.csproj">
+      <Project>{02255D19-E6E4-42F9-B530-7978E5AB1DFD}</Project>
+      <Name>Possan.Distributed.Sandbox</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Possan.MapReduce\Possan.MapReduce.csproj">
       <Project>{EE995F6D-09ED-4E8C-B7D0-DB59E09D9C82}</Project>
       <Name>Possan.MapReduce</Name>
-      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

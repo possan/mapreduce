@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Net;
-using System.Reflection;
+using System.Security;
+using System.Security.Policy;
+using Possan.Distributed.Sandbox;
 
 namespace Possan.Distributed.Worker
 {
@@ -10,16 +12,22 @@ namespace Possan.Distributed.Worker
 		public string ID;
 		public string MyUrl;
 		public string CallbackUrl;
-
-		public List<Assembly> LoadedAssemblies;
+		// public List<Assembly> LoadedAssemblies;
 		private AppDomain Sandbox;
+		public string SandboxPath;
 		public string JobType;
 		public IJobArgs JobArgs;
-		
+
 		public WorkerJob()
 		{
-			LoadedAssemblies = new List<Assembly>();
-			Sandbox = AppDomain.CreateDomain("Temp sandbox");
+			// LoadedAssemblies = new List<Assembly>();
+			SandboxPath = Path.GetTempPath() + Path.DirectorySeparatorChar + "wa-" + Guid.NewGuid().ToString();
+			if (!Directory.Exists(SandboxPath))
+				Directory.CreateDirectory(SandboxPath);
+			var setup = new AppDomainSetup();
+			setup.ApplicationBase = SandboxPath;
+			var perms = new PermissionSet(System.Security.Permissions.PermissionState.Unrestricted);
+			Sandbox = AppDomain.CreateDomain("Temp sandbox", null, setup, perms, new StrongName[] { });
 			JobType = "";
 			JobArgs = new DefaultJobArgs();
 		}
@@ -31,9 +39,14 @@ namespace Possan.Distributed.Worker
 
 			try
 			{
-				var sandboxtool = Sandbox.CreateInstanceAndUnwrap("Possan.Distributed", "Possan.Distributed.SandboxProxy") as ISandboxProxy;
+				var sandboxargs = new SandboxedJobArgs();
+				foreach (var k in JobArgs.GetKeys())
+					foreach (var v in JobArgs.GetValues(k))
+						sandboxargs.Add(k, v);
+
+				var sandboxtool = Sandbox.CreateInstanceAndUnwrap("Possan.Distributed.Sandbox", "Possan.Distributed.Sandbox.SandboxProxy") as ISandboxProxy;
 				if (sandboxtool != null)
-					sandboxtool.RunJob(JobType, JobArgs);
+					sandboxtool.RunJob(Sandbox, JobType, sandboxargs);
 			}
 			catch (Exception z)
 			{
@@ -45,15 +58,18 @@ namespace Possan.Distributed.Worker
 			wc.UploadString(CallbackUrl, postdata);
 
 			Console.WriteLine("WorkerJob: All done, clean up.");
+
+			// delete folder...
 		}
 
-		public void AddAssembly(byte[] data)
+		public void AddAssembly(string filename, byte[] data)
 		{
 			try
 			{
-				var a = Sandbox.Load(data);
-				if (a != null)
-					LoadedAssemblies.Add(a);
+				Console.WriteLine("Loading " + filename + " (" + data.Length + " bytes)");
+				File.WriteAllBytes(SandboxPath + Path.DirectorySeparatorChar + filename, data);
+				// var a = Sandbox.Load(filename);
+				// Console.WriteLine("Loaded: " + a.FullName);
 			}
 			catch (Exception z)
 			{

@@ -35,7 +35,8 @@ namespace Possan.Distributed.Worker
 			{
 				var jobid = m1.Groups[1].Value;
 				var bytes = Utilities.ReadAllBytes(request.Body);
-				_worker.JobController.AddAssembly(jobid,bytes);
+				var filename = request.QueryString["name"].Value;
+				_worker.JobController.AddAssembly(jobid,filename,bytes);
 				response.Body = new MemoryStream(response.Encoding.GetBytes("OK"));
 				return true;
 			}

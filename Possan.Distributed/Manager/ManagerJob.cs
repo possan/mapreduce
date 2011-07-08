@@ -5,14 +5,22 @@ using System.Threading;
 
 namespace Possan.Distributed.Manager
 {
-	class ManagerJob : SimpleThread
+	public class ManagerJob : SimpleThread
 	{
 		public string ID;
 		public string CallbackUrl;
 		public List<WorkerInfo> Workers;
 		public ManagerJobState State;
+		public ManagerJobController Controller;
 		public string JobType;
 		public IJobArgs JobArgs;
+		public int Timeout;
+		public Dictionary<string, byte[]> Assemblies;
+
+		public void AddAssembly(string filename, byte[] data)
+		{
+			Assemblies.Add(filename, data);
+		}
 
 		public ManagerJob()
 		{
@@ -22,6 +30,23 @@ namespace Possan.Distributed.Manager
 			State = ManagerJobState.Preparing;
 			JobType = "";
 			JobArgs = new DefaultJobArgs();
+			Timeout = 5;
+			Assemblies = new Dictionary<string, byte[]>();
+		}
+
+		public void StartupWorker(WorkerInfo w)
+		{
+			var wc = new WebClient();
+			foreach (var a in Assemblies.Keys)
+			{
+				Console.WriteLine("To " + w.URL);
+				wc.UploadData(Utilities.CombineURL(w.URL, "/job/" + w.RemoteJobId + "/assemblies?name=" + a), Assemblies[a]);
+			}
+			// upload all assemblies
+			var u = Utilities.CombineURL(w.URL, "/job/" + w.RemoteJobId + "/start");
+			wc.DownloadString(u);
+			w.State = WorkerState.JobRunning;
+			w.StartTime = DateTime.Now;
 		}
 
 		public override void InnerRun()
@@ -30,29 +55,50 @@ namespace Possan.Distributed.Manager
 
 			Console.WriteLine("Manager job: Tell all workers to start.");
 
+			// upload all assemblies
 			foreach (var w in Workers)
 			{
-				var wc = new WebClient();
-				var u = Utilities.CombineURL(w.URL, "/job/" + w.RemoteJobId + "/start");
-				wc.DownloadString(u);
-				w.State = WorkerState.JobRunning;
+				StartupWorker(w);
 			}
 
 			State = ManagerJobState.Working;
 
 			Console.WriteLine("Manager job: Wait for all to be done...");
 
-			bool anyNotDone = true;
-			while (anyNotDone)
+			bool anyNotDoneAndNotCrashed = true;
+			while (anyNotDoneAndNotCrashed)
 			{
-				anyNotDone = false;
+				anyNotDoneAndNotCrashed = false;
+				int numcrashed = 0;
 				foreach (var w in Workers)
 				{
-					if (w.State != WorkerState.JobDone)
-						anyNotDone = true;
-					else
-						Console.WriteLine("Worker " + w.URL + " is " + w.State);
+					if (w.State != WorkerState.JobDone && w.State != WorkerState.Crashed)
+						anyNotDoneAndNotCrashed = true;
+					else 
+					{
+						var dur = DateTime.Now.Subtract(w.StartTime).TotalSeconds;
+						Console.WriteLine("Worker " + w.URL + " is " + w.State + " (runtime: " + dur + " seconds)");
+						if (dur > Timeout)
+						{
+							// mark as crashed?
+							w.State = WorkerState.Crashed;
+							Console.WriteLine("Crashed? get a new one?");
+							numcrashed++;
+						}
+					}
 				}
+
+				if (numcrashed > 0)
+				{
+					var wurls = Controller.ProvisionWorkers(numcrashed);
+					foreach(var wurl in wurls)
+					{
+						var nw = Controller.GetWorkerByUrl(wurl);
+						StartupWorker(nw);
+						Workers.Add(nw);
+					}
+				}
+
 				Thread.Sleep(1000);
 			}
 
@@ -62,7 +108,8 @@ namespace Possan.Distributed.Manager
 
 			foreach (var w in Workers)
 			{
-				w.State = WorkerState.Idle;
+				if( w.State != WorkerState.Crashed )
+					w.State = WorkerState.Idle;
 			}
 
 			Console.WriteLine("Manager job: Done.");

@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Threading;
 using Possan.Distributed.Sandbox;
 using Possan.MapReduce.Util;
 
-namespace Possan.MapReduce.Distributed
+namespace Possan.MapReduce.Distributed.Jobs
 {
 	public class ShuffleJob : ISandboxedJob
 	{
@@ -20,6 +21,7 @@ namespace Possan.MapReduce.Distributed
 			var outputs = JobUtilities.ParseAndCreateFileDestinations(args.GetValues("output"));
 			
 			Splitter.Split(inputs, outputs, partitioner, sort);
+
 
 			return "Shuffle result.";
 		}

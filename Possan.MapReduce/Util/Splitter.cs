@@ -164,7 +164,7 @@ namespace Possan.MapReduce.Util
 				string inputfile;
 				while (input.ReadNext(out inputfile))
 				{
-					Console.WriteLine("Splitter found file " + inputfile);
+					// Console.WriteLine("Splitter found file " + inputfile);
 					stp.Queue(new FileSplitterThread
 					{
 						outputwriter = writer,

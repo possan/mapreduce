@@ -2,7 +2,7 @@
 using Possan.Distributed.Sandbox;
 using Possan.MapReduce.Util;
 
-namespace Possan.MapReduce.Distributed
+namespace Possan.MapReduce.Distributed.Jobs
 {
 	public class MapJob : ISandboxedJob
 	{

@@ -32,16 +32,15 @@ namespace Possan.Distributed.Client
 			Console.WriteLine("Uploading assemblies...");
 			foreach (var a in _cfg.Assemblies)
 			{
-				if (!File.Exists(a))
-					continue;
-				wc.UploadData(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/assemblies"), File.ReadAllBytes(a));
+				var n = Path.GetFileName(a);
+				wc.UploadData(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/assemblies?name=" + n), File.ReadAllBytes(a));
 			}
 			Console.WriteLine("Uploading done.");
 
-			Console.WriteLine("Starting job "+JobId);
+			Console.WriteLine("Starting job " + JobId);
 			wc.DownloadString(Utilities.CombineURL(_cfg.ManagerUrl, "/job/" + JobId + "/start"));
 			State = ClientConnectionState.Started;
-			Console.WriteLine("Job " + JobId+" started."); 
+			Console.WriteLine("Job " + JobId + " started.");
 		}
 
 		private string BuildJobInfoJson()
@@ -58,7 +57,7 @@ namespace Possan.Distributed.Client
 
 		public void Poll()
 		{
-			if( State != ClientConnectionState.Started )
+			if (State != ClientConnectionState.Started)
 				return;
 			var status = "";
 			try
@@ -76,15 +75,15 @@ namespace Possan.Distributed.Client
 				State = ClientConnectionState.Done;
 			}
 			else if (status != "working")
-				Console.WriteLine("Unknown job status: " + status); 
+				Console.WriteLine("Unknown job status: " + status);
 		}
 
 		public void Wait()
 		{
-			if( State != ClientConnectionState.Started )
+			if (State != ClientConnectionState.Started)
 				return;
 
-			Console.WriteLine("Waiting for job "+JobId+" to finish...");
+			Console.WriteLine("Waiting for job " + JobId + " to finish...");
 			bool done = false;
 			do
 			{

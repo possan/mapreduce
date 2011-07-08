@@ -20,27 +20,29 @@ namespace Possan.Distributed.Manager
 			m_workers = new List<WorkerInfo>();
 		}
 
-		ManagerJob GetJobById(string id)
+		public ManagerJob GetManagerJobById(string id)
 		{
 			return m_jobs.FirstOrDefault(j => j.ID == id);
 		}
 
-		WorkerInfo GetWorkerByUrl(string url)
+		public WorkerInfo GetWorkerByUrl(string url)
 		{
 			return m_workers.FirstOrDefault(j => j.URL == url);
 		}
 
-		List<string> ProvisionWorkers(int n)
+		public List<string> ProvisionWorkers(int n)
 		{
 			var ret = new List<string>();
 			foreach (var w in m_workers)
 			{
+				if (ret.Count >= n)
+					continue;
+
 				if (w.State != WorkerState.Idle)
 					continue;
 
 				w.State = WorkerState.Allocated;
-				if (ret.Count < n)
-					ret.Add(w.URL);
+				ret.Add(w.URL);
 			}
 			return ret;
 		}
@@ -56,7 +58,7 @@ namespace Possan.Distributed.Manager
 				return "";
 
 			var newjob = new ManagerJob();
-
+			newjob.Controller = this;
 			newjob.ID = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 10);
 
 			int numworkers = 2;
@@ -120,26 +122,18 @@ namespace Possan.Distributed.Manager
 			return jobinfo.ToString();
 		}
 
-		public void AddAssembly(string jobid, byte[] data)
+		public void AddAssembly(string jobid, string filename, byte[] data)
 		{
-			var job = GetJobById(jobid);
+			var job = GetManagerJobById(jobid);
 			if (job == null)
 				return;
-
-			Console.WriteLine("Uploading one assembly (" + data.Length + " bytes)");
-			foreach (var w in job.Workers)
-			{
-				Console.WriteLine("To " + w.URL);
-				var wc = new WebClient();
-				wc.UploadData(Utilities.CombineURL(w.URL, "/job/" + w.RemoteJobId + "/assemblies"), data);
-			}
-
+			job.AddAssembly(filename,data);
 			// m_jobs.ass
 		}
 
 		public void Start(string jobid)
 		{
-			var job = GetJobById(jobid);
+			var job = GetManagerJobById(jobid);
 			if (job == null)
 				return;
 			job.Start();
@@ -148,7 +142,7 @@ namespace Possan.Distributed.Manager
 
 		public void JobDone(string jobid, string jsondata)
 		{
-			var job = GetJobById(jobid);
+			var job = GetManagerJobById(jobid);
 			if (job == null)
 				return;
 
@@ -172,7 +166,7 @@ namespace Possan.Distributed.Manager
 
 		public string GetStatus(string jobid)
 		{
-			var job = GetJobById(jobid);
+			var job = GetManagerJobById(jobid);
 			if (job == null)
 				return "";
 
